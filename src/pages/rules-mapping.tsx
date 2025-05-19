@@ -90,6 +90,8 @@ export default function RulesMappingPage() {
     source: string;
     target: string;
   } | null>(null);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5;
 
   // Simulate loading on mount and after add/delete
   useEffect(() => {
@@ -216,6 +218,9 @@ export default function RulesMappingPage() {
     </tbody>
   );
 
+  const pages = Math.max(1, Math.ceil(mappings.length / rowsPerPage));
+  const items = mappings.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
   return (
     <DefaultLayout>
       {/* Hero Section */}
@@ -276,6 +281,7 @@ export default function RulesMappingPage() {
                   >
                     <Select
                       label="Source Account"
+                      aria-label="Source Account"
                       placeholder="Select source"
                       selectedKeys={
                         newMapping.source ? [newMapping.source] : []
@@ -290,6 +296,7 @@ export default function RulesMappingPage() {
                         setError("");
                       }}
                       className="w-full"
+                      disallowEmptySelection
                     >
                       {mockAccounts.map((acc) => (
                         <SelectItem key={acc.id}>{acc.name}</SelectItem>
@@ -298,6 +305,7 @@ export default function RulesMappingPage() {
                     <Select
                       label="Target Account"
                       placeholder="Select target"
+                      aria-label="Target Account"
                       selectedKeys={
                         newMapping.target ? [newMapping.target] : []
                       }
@@ -308,6 +316,7 @@ export default function RulesMappingPage() {
                       }}
                       className="w-full"
                       isDisabled={!newMapping.source}
+                      disallowEmptySelection
                     >
                       {getAvailableTargetAccounts(newMapping.source).map(
                         (acc) => (
@@ -391,24 +400,61 @@ export default function RulesMappingPage() {
                         classNames={{
                           wrapper: "min-w-full",
                         }}
+                        bottomContent={
+                          <div className="flex w-full justify-center gap-2 py-4">
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              onPress={() => setPage((p) => Math.max(p - 1, 1))}
+                              isDisabled={page === 1}
+                              className="min-w-[100px]"
+                            >
+                              Previous
+                            </Button>
+                            {Array.from({ length: pages }, (_, i) => i + 1).map(
+                              (p) => (
+                                <Button
+                                  key={p}
+                                  size="sm"
+                                  variant={p === page ? "flat" : "light"}
+                                  className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
+                                  onPress={() => setPage(p)}
+                                >
+                                  {p}
+                                </Button>
+                              )
+                            )}
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              onPress={() =>
+                                setPage((p) => Math.min(p + 1, pages))
+                              }
+                              isDisabled={page === pages}
+                              className="min-w-[100px]"
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        }
                       >
                         <TableHeader>
                           <TableColumn>Source</TableColumn>
                           <TableColumn>Target</TableColumn>
                           <TableColumn align="center">Actions</TableColumn>
                         </TableHeader>
-                        <TableBody items={mappings} emptyContent={<></>}>
+                        <TableBody items={items} emptyContent={<></>}>
                           {(m) => (
                             <TableRow key={m.id}>
-                              <TableCell className="text-primary font-medium">
+                              <TableCell className="whitespace-nowrap text-primary font-medium">
                                 {mockAccounts.find((a) => a.id === m.source)
                                   ?.name || "?"}
                               </TableCell>
-                              <TableCell className="text-secondary font-medium">
+                              <TableCell className="whitespace-nowrap text-secondary font-medium">
                                 {mockAccounts.find((a) => a.id === m.target)
                                   ?.name || "?"}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="whitespace-nowrap text-center">
                                 <div className="flex gap-2 justify-center">
                                   <Tooltip content="Edit" placement="top">
                                     <Button
@@ -462,6 +508,7 @@ export default function RulesMappingPage() {
           <ModalBody className="space-y-5">
             <Select
               label="Source Account"
+              aria-label="Source Account"
               placeholder="Select source"
               selectedKeys={mappingToEdit?.source ? [mappingToEdit.source] : []}
               onSelectionChange={(keys: any) => {
@@ -472,6 +519,7 @@ export default function RulesMappingPage() {
                 setError("");
               }}
               className="w-full"
+              disallowEmptySelection
             >
               {mockAccounts.map((acc) => (
                 <SelectItem key={acc.id}>{acc.name}</SelectItem>
@@ -480,6 +528,7 @@ export default function RulesMappingPage() {
             <Select
               label="Target Account"
               placeholder="Select target"
+              aria-label="Target Account"
               selectedKeys={mappingToEdit?.target ? [mappingToEdit.target] : []}
               onSelectionChange={(keys: any) => {
                 const val = Array.from(keys)[0] as string;
@@ -490,6 +539,7 @@ export default function RulesMappingPage() {
               }}
               className="w-full"
               isDisabled={!mappingToEdit?.source}
+              disallowEmptySelection
             >
               {getAvailableTargetAccounts(mappingToEdit?.source || "").map(
                 (acc) => (
