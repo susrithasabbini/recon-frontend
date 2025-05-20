@@ -73,7 +73,7 @@ export default function AccountManagementPage() {
   const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState<"debit" | "credit">("debit");
-  const [formTouched, setFormTouched] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const rowsPerPage = 5;
 
@@ -99,14 +99,15 @@ export default function AccountManagementPage() {
    */
   function handleAddAccount(e: React.FormEvent) {
     e.preventDefault();
-    setFormTouched(true);
     if (!name.trim()) return;
     setAccounts((prev) => [...prev, { name: name.trim(), type }]);
     setName("");
     setType("debit");
     setPage(1);
-    setFormTouched(false);
-    addToast({ title: "Account added successfully" });
+
+    addToast({
+      title: "Account created",
+    });
   }
 
   function handleDeleteAccount(account: Account) {
@@ -126,7 +127,9 @@ export default function AccountManagementPage() {
     );
     setAccountToDelete(null);
     if (items.length === 1 && page > 1) setPage(page - 1);
-    addToast({ title: "Account deleted" });
+    addToast({
+      title: "Account deleted",
+    });
   }
 
   function handleEditAccount(account: Account) {
@@ -146,7 +149,9 @@ export default function AccountManagementPage() {
       )
     );
     setAccountToEdit(null);
-    addToast({ title: "Account updated successfully" });
+    addToast({
+      title: "Account updated successfully",
+    });
   }
 
   /**
@@ -159,8 +164,7 @@ export default function AccountManagementPage() {
   }, []);
 
   const isNameValid = name.trim().length > 0;
-  const nameError =
-    formTouched && !isNameValid ? "Account name is required" : "";
+  const nameError = !isNameValid ? "Account name is required" : "";
 
   return (
     <DefaultLayout>
@@ -227,17 +231,19 @@ export default function AccountManagementPage() {
                         value={name}
                         onChange={(e) => {
                           setName(e.target.value);
-                          setFormTouched(true);
                         }}
-                        onBlur={() => setFormTouched(true)}
-                        required
+                        errorMessage={nameError}
                         classNames={{
                           input: "text-base",
                           inputWrapper: "h-10 sm:h-12",
                         }}
                         autoFocus
+                        data-testid="account-name-input"
                       />
-                      <p className="text-xs text-red-500 mt-1 min-h-[1.25rem]">
+                      <p
+                        className="text-xs text-red-500 mt-1 min-h-[1.25rem]"
+                        data-testid="name-error"
+                      >
                         {nameError}
                       </p>
                     </div>
@@ -259,13 +265,17 @@ export default function AccountManagementPage() {
                       className="w-full h-10 sm:h-12 text-base font-medium"
                       disabled={!isNameValid}
                       aria-disabled={!isNameValid}
+                      data-testid="add-account-button"
                     >
                       <PlusIcon className="h-5 w-5 mr-2" /> Add Account
                     </Button>
                   </form>
                 </CardBody>
                 {accounts.length > 0 && (
-                  <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
+                  <CardFooter
+                    data-testid="total-accounts"
+                    className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6"
+                  >
                     Total accounts: {accounts.length}
                   </CardFooter>
                 )}
@@ -293,6 +303,7 @@ export default function AccountManagementPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full sm:max-w-xs"
                 classNames={{ input: "text-sm", inputWrapper: "h-9" }}
+                data-testid="search-input"
               />
             </motion.div>
 
@@ -305,6 +316,7 @@ export default function AccountManagementPage() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    data-testid="loading-skeleton"
                   >
                     {[...Array(3)].map((_, i) => (
                       <motion.div
@@ -369,6 +381,7 @@ export default function AccountManagementPage() {
                             </Button>
                           </div>
                         }
+                        data-testid="accounts-table"
                       >
                         <TableHeader>
                           <TableColumn align="start">Account Name</TableColumn>
@@ -409,6 +422,7 @@ export default function AccountManagementPage() {
                                       onPress={() => handleEditAccount(acc)}
                                       className="text-primary-500 hover:text-primary-600 focus:outline focus:outline-2 focus:outline-primary"
                                       aria-label={`Edit account ${acc.name}`}
+                                      data-testid="edit-button"
                                     >
                                       <PencilSquareIcon className="h-4 w-4" />
                                     </Button>
@@ -422,6 +436,7 @@ export default function AccountManagementPage() {
                                       onPress={() => handleDeleteAccount(acc)}
                                       className="text-danger-500 hover:text-danger-600 focus:outline focus:outline-2 focus:outline-danger"
                                       aria-label={`Delete account ${acc.name}`}
+                                      data-testid="delete-button"
                                     >
                                       <TrashIcon className="h-4 w-4" />
                                     </Button>
@@ -450,7 +465,10 @@ export default function AccountManagementPage() {
                     >
                       <BanknotesIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                    <p
+                      data-testid="no-accounts-found"
+                      className="text-gray-500 dark:text-gray-400 text-lg font-medium"
+                    >
                       No accounts found
                     </p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm">
@@ -484,7 +502,11 @@ export default function AccountManagementPage() {
             <Button variant="light" onPress={() => setAccountToDelete(null)}>
               Cancel
             </Button>
-            <Button color="danger" onPress={confirmDelete}>
+            <Button
+              color="danger"
+              onPress={confirmDelete}
+              data-testid="confirm-delete-button"
+            >
               Delete
             </Button>
           </ModalFooter>
@@ -508,6 +530,7 @@ export default function AccountManagementPage() {
               onChange={(e) => setEditName(e.target.value)}
               required
               autoFocus
+              data-testid="edit-name-input"
             />
             <Select
               aria-label="Edit Account Type"
@@ -515,6 +538,7 @@ export default function AccountManagementPage() {
               onChange={(e) =>
                 setEditType(e.target.value as "debit" | "credit")
               }
+              data-testid="edit-type-select"
             >
               <SelectItem key="debit">Debit</SelectItem>
               <SelectItem key="credit">Credit</SelectItem>
@@ -528,7 +552,11 @@ export default function AccountManagementPage() {
             >
               Cancel
             </Button>
-            <Button color="primary" type="submit">
+            <Button
+              color="primary"
+              type="submit"
+              data-testid="save-edit-button"
+            >
               Save Changes
             </Button>
           </ModalFooter>

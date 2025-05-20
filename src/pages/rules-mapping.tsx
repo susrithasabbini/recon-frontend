@@ -9,6 +9,7 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
+import { addToast } from "@heroui/toast";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -128,6 +129,9 @@ export default function RulesMappingPage() {
       setNewMapping({ source: "", target: "" });
       setError("");
       setLoading(false);
+      addToast({
+        title: "Mapping created",
+      });
     }, 700);
   };
 
@@ -146,6 +150,9 @@ export default function RulesMappingPage() {
       setMappings((prev) => prev.filter((m) => m.id !== mappingToDelete.id));
       setMappingToDelete(null);
       setLoading(false);
+      addToast({
+        title: "Mapping deleted",
+      });
     }, 700);
   };
 
@@ -190,6 +197,9 @@ export default function RulesMappingPage() {
       setMappingToEdit(null);
       setError("");
       setLoading(false);
+      addToast({
+        title: "Mapping updated successfully",
+      });
     }, 700);
   };
 
@@ -283,9 +293,7 @@ export default function RulesMappingPage() {
                       label="Source Account"
                       aria-label="Source Account"
                       placeholder="Select source"
-                      selectedKeys={
-                        newMapping.source ? [newMapping.source] : []
-                      }
+                      selectedKeys={[newMapping.source]}
                       onSelectionChange={(keys: any) => {
                         const val = Array.from(keys)[0] as string;
                         setNewMapping((prev) => ({
@@ -297,6 +305,7 @@ export default function RulesMappingPage() {
                       }}
                       className="w-full"
                       disallowEmptySelection
+                      data-testid="source-account-select"
                     >
                       {mockAccounts.map((acc) => (
                         <SelectItem key={acc.id}>{acc.name}</SelectItem>
@@ -306,9 +315,7 @@ export default function RulesMappingPage() {
                       label="Target Account"
                       placeholder="Select target"
                       aria-label="Target Account"
-                      selectedKeys={
-                        newMapping.target ? [newMapping.target] : []
-                      }
+                      selectedKeys={[newMapping.target]}
                       onSelectionChange={(keys: any) => {
                         const val = Array.from(keys)[0] as string;
                         setNewMapping((prev) => ({ ...prev, target: val }));
@@ -317,6 +324,7 @@ export default function RulesMappingPage() {
                       className="w-full"
                       isDisabled={!newMapping.source}
                       disallowEmptySelection
+                      data-testid="target-account-select"
                     >
                       {getAvailableTargetAccounts(newMapping.source).map(
                         (acc) => (
@@ -325,13 +333,19 @@ export default function RulesMappingPage() {
                       )}
                     </Select>
                     {error && (
-                      <p className="text-red-500 text-sm mt-2">{error}</p>
+                      <p
+                        className="text-red-500 text-sm mt-2"
+                        data-testid="error-message"
+                      >
+                        {error}
+                      </p>
                     )}
                     <Button
                       type="submit"
                       color="primary"
                       className="w-full h-10 sm:h-12 text-base font-medium"
                       isDisabled={!newMapping.source || !newMapping.target}
+                      data-testid="add-mapping-button"
                     >
                       Add Mapping
                     </Button>
@@ -520,6 +534,7 @@ export default function RulesMappingPage() {
               }}
               className="w-full"
               disallowEmptySelection
+              data-testid="edit-source-select"
             >
               {mockAccounts.map((acc) => (
                 <SelectItem key={acc.id}>{acc.name}</SelectItem>
@@ -540,6 +555,7 @@ export default function RulesMappingPage() {
               className="w-full"
               isDisabled={!mappingToEdit?.source}
               disallowEmptySelection
+              data-testid="edit-target-select"
             >
               {getAvailableTargetAccounts(mappingToEdit?.source || "").map(
                 (acc) => (
@@ -564,6 +580,7 @@ export default function RulesMappingPage() {
               color="primary"
               type="submit"
               isDisabled={!mappingToEdit?.source || !mappingToEdit?.target}
+              data-testid="save-edit-button"
             >
               Save Changes
             </Button>
@@ -603,7 +620,11 @@ export default function RulesMappingPage() {
             <Button variant="light" onPress={() => setMappingToDelete(null)}>
               Cancel
             </Button>
-            <Button color="danger" onPress={confirmDelete}>
+            <Button
+              color="danger"
+              onPress={confirmDelete}
+              data-testid="confirm-delete-button"
+            >
               Delete
             </Button>
           </ModalFooter>
