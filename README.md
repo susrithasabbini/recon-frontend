@@ -28,8 +28,17 @@ You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
 ```bash
 npm install
 ```
+## Environment Variables
 
-### Run the development server
+Create a `.env` file in the root directory of the project with the following variables:
+
+```
+VITE_API_URL=http://localhost:3000/api
+```
+
+Note: All environment variables must be prefixed with `VITE_` to be accessible in the frontend code.
+
+## Run the development server
 
 ```bash
 npm run dev
