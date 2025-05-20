@@ -13,7 +13,7 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="add-account-button"]').click();
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account created"
+      "Account created",
     );
     cy.get('[data-testid="accounts-table"]').should("contain", "Test Account");
     cy.get('[data-testid="accounts-table"]').should("contain", "Debit");
@@ -30,7 +30,7 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="add-account-button"]').click();
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account created"
+      "Account created",
     );
 
     // Then edit it
@@ -41,12 +41,12 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="save-edit-button"]').click();
     cy.get('[data-testid="accounts-table"]').should(
       "contain",
-      "Updated Account"
+      "Updated Account",
     );
     cy.get('[data-testid="accounts-table"]').should("contain", "Credit");
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account updated successfully"
+      "Account updated successfully",
     );
   });
 
@@ -56,7 +56,7 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="add-account-button"]').click();
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account created"
+      "Account created",
     );
 
     cy.get('[data-testid="delete-button"]').first().click();
@@ -64,7 +64,7 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="no-accounts-found"]').should("be.visible");
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account deleted"
+      "Account deleted",
     );
   });
 
@@ -74,7 +74,7 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="add-account-button"]').click();
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account created"
+      "Account created",
     );
 
     cy.get('[data-testid="account-name-input"]').type("Test Account 2");
@@ -83,18 +83,18 @@ describe("Account Creation Page", () => {
     cy.get('[data-testid="add-account-button"]').click();
     cy.get('[data-placement="bottom-right"]').should(
       "contain",
-      "Account created"
+      "Account created",
     );
 
     // Search for specific account
     cy.get('[data-testid="search-input"]').type("Test Account 1");
     cy.get('[data-testid="accounts-table"]').should(
       "contain",
-      "Test Account 1"
+      "Test Account 1",
     );
     cy.get('[data-testid="accounts-table"]').should(
       "not.contain",
-      "Test Account 2"
+      "Test Account 2",
     );
   });
 });

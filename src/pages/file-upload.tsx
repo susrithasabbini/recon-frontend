@@ -11,11 +11,12 @@ import {
   TableRow,
   TableCell,
 } from "@heroui/table";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
+import { useDefaultContext } from "@/contexts/default-context";
 // Simple CSV parser (no external dependency)
 function parseCSV(text: string): string[][] {
   return text
@@ -50,6 +51,7 @@ const scaleIn = {
 };
 
 export default function FileUploadPage() {
+  const { selectedMerchant } = useDefaultContext();
   const [selectedType, setSelectedType] = useState("OMS");
   const [omsData, setOmsData] = useState<string[][]>([]);
   const [pspData, setPspData] = useState<string[][]>([]);
@@ -61,8 +63,16 @@ export default function FileUploadPage() {
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "OMS" | "PSP"
+    type: "OMS" | "PSP",
   ) => {
+    if (!selectedMerchant) {
+      addToast({
+        title: "Please select a merchant first",
+        variant: "flat",
+      });
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
     setLoading(true);
@@ -94,7 +104,7 @@ export default function FileUploadPage() {
   const pages = Math.max(1, Math.ceil((data.length - 1) / rowsPerPage));
   const items = data.slice(
     (page - 1) * rowsPerPage + 1,
-    page * rowsPerPage + 1
+    page * rowsPerPage + 1,
   );
 
   return (
@@ -120,7 +130,7 @@ export default function FileUploadPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
             File Upload
@@ -161,7 +171,7 @@ export default function FileUploadPage() {
                           accept=".csv"
                           onChange={(e) => handleFileUpload(e, "OMS")}
                           className="sr-only"
-                          disabled={loading}
+                          disabled={loading || !selectedMerchant}
                           id="oms-upload"
                           data-testid="oms-file-input"
                         />
@@ -171,6 +181,7 @@ export default function FileUploadPage() {
                             block w-full cursor-pointer text-sm text-gray-500
                             border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
                             hover:file:bg-blue-100
+                            ${!selectedMerchant ? "opacity-50 cursor-not-allowed" : ""}
                           `}
                           data-testid="oms-file-name"
                         >
@@ -186,7 +197,7 @@ export default function FileUploadPage() {
                           accept=".csv"
                           onChange={(e) => handleFileUpload(e, "PSP")}
                           className="sr-only"
-                          disabled={loading}
+                          disabled={loading || !selectedMerchant}
                           id="psp-upload"
                           data-testid="psp-file-input"
                         />
@@ -196,6 +207,7 @@ export default function FileUploadPage() {
                             block w-full cursor-pointer text-sm text-gray-500
                             border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
                             hover:file:bg-blue-100
+                            ${!selectedMerchant ? "opacity-50 cursor-not-allowed" : ""}
                           `}
                           data-testid="psp-file-name"
                         >
@@ -247,113 +259,133 @@ export default function FileUploadPage() {
               </Select>
             </motion.div>
             <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
-              <motion.div
-                key="table"
-                variants={scaleIn}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <div className="overflow-x-auto w-full">
-                  {loading ? (
-                    <div className="p-8 text-center text-gray-400">
-                      Loading...
-                    </div>
-                  ) : hasData ? (
-                    <Table
-                      aria-label="Uploaded CSV Data"
-                      className="min-w-full"
-                      data-testid="data-table"
-                      bottomContent={
-                        <div
-                          className="flex w-full justify-center gap-2 py-4"
-                          data-testid="pagination"
-                        >
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            onPress={() => setPage((p) => Math.max(p - 1, 1))}
-                            isDisabled={page === 1}
-                            className="min-w-[100px]"
-                            data-testid="previous-page"
-                          >
-                            Previous
-                          </Button>
-                          {Array.from({ length: pages }, (_, i) => i + 1).map(
-                            (p) => (
-                              <Button
-                                key={p}
-                                size="sm"
-                                variant={p === page ? "flat" : "light"}
-                                className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
-                                onPress={() => setPage(p)}
-                                data-testid={
-                                  p === page ? "current-page" : undefined
-                                }
-                              >
-                                {p}
-                              </Button>
-                            )
-                          )}
-                          <Button
-                            size="sm"
-                            variant="flat"
-                            onPress={() =>
-                              setPage((p) => Math.min(p + 1, pages))
-                            }
-                            isDisabled={page === pages}
-                            className="min-w-[100px]"
-                            data-testid="next-page"
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      }
-                    >
-                      <TableHeader>
-                        {data[0].map((header, idx) => (
-                          <TableColumn key={idx}>{header}</TableColumn>
-                        ))}
-                      </TableHeader>
-                      <TableBody items={items} emptyContent={<></>}>
-                        {(row) => (
-                          <TableRow key={row.join("-")}>
-                            {row.map((cell, cellIdx) => (
-                              <TableCell key={cellIdx}>{cell}</TableCell>
-                            ))}
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <motion.div
-                      key="empty"
-                      variants={scaleIn}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                      className="flex flex-col items-center gap-3 py-14 text-center"
-                      data-testid="empty-state"
-                    >
+              <AnimatePresence mode="wait">
+                {loading && selectedMerchant ? (
+                  <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    data-testid="loading-skeleton"
+                  >
+                    {[...Array(3)].map((_, i) => (
                       <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
-                      >
-                        <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
-                      </motion.div>
-                      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                        {selectedType === "OMS"
+                        key={i}
+                        className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : !selectedMerchant || !hasData ? (
+                  <motion.div
+                    key="empty"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    data-testid="empty-state"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    >
+                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                    </motion.div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      {!selectedMerchant
+                        ? "Please select a merchant first"
+                        : selectedType === "OMS"
                           ? "No OMS file uploaded"
                           : "No PSP file uploaded"}
-                      </p>
-                      <p className="text-gray-400 dark:text-gray-500 text-sm">
-                        Please upload a {selectedType} CSV file using the form
-                      </p>
-                    </motion.div>
-                  )}
-                </div>
-              </motion.div>
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">
+                      {!selectedMerchant
+                        ? "Select a merchant to upload files"
+                        : `Please upload a ${selectedType} CSV file using the form`}
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="table"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    <div className="overflow-x-auto w-full">
+                      <Table
+                        aria-label="Uploaded CSV Data"
+                        className="min-w-full"
+                        data-testid="data-table"
+                        bottomContent={
+                          <div
+                            className="flex w-full justify-center gap-2 py-4"
+                            data-testid="pagination"
+                          >
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              onPress={() => setPage((p) => Math.max(p - 1, 1))}
+                              isDisabled={page === 1}
+                              className="min-w-[100px]"
+                              data-testid="previous-page"
+                            >
+                              Previous
+                            </Button>
+                            {Array.from({ length: pages }, (_, i) => i + 1).map(
+                              (p) => (
+                                <Button
+                                  key={p}
+                                  size="sm"
+                                  variant={p === page ? "flat" : "light"}
+                                  className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
+                                  onPress={() => setPage(p)}
+                                  data-testid={
+                                    p === page ? "current-page" : undefined
+                                  }
+                                >
+                                  {p}
+                                </Button>
+                              ),
+                            )}
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              onPress={() =>
+                                setPage((p) => Math.min(p + 1, pages))
+                              }
+                              isDisabled={page === pages}
+                              className="min-w-[100px]"
+                              data-testid="next-page"
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        }
+                      >
+                        <TableHeader>
+                          {data[0].map((header, idx) => (
+                            <TableColumn key={idx}>{header}</TableColumn>
+                          ))}
+                        </TableHeader>
+                        <TableBody items={items} emptyContent={<></>}>
+                          {(row) => (
+                            <TableRow key={row.join("-")}>
+                              {row.map((cell, cellIdx) => (
+                                <TableCell key={cellIdx}>{cell}</TableCell>
+                              ))}
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Card>
           </main>
         </div>

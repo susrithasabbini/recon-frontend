@@ -32,10 +32,17 @@ import { Tooltip } from "@heroui/tooltip";
 import { addToast } from "@heroui/toast";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
+import { useDefaultContext } from "@/contexts/default-context";
 
 interface Account {
-  name: string;
-  type: "debit" | "credit";
+  account_id: string;
+  merchant_id: string;
+  account_name: string;
+  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
+  currency: string;
+  posted_balance: string;
+  pending_balance: string;
+  available_balance: string;
 }
 
 /**
@@ -64,15 +71,24 @@ const scaleIn = {
 };
 
 export default function AccountManagementPage() {
+  const { selectedMerchant, createAccount, getAccounts, deleteAccount } =
+    useDefaultContext();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [name, setName] = useState("");
-  const [type, setType] = useState<"debit" | "credit">("debit");
+  const [type, setType] = useState<"DEBIT_NORMAL" | "CREDIT_NORMAL">(
+    "DEBIT_NORMAL",
+  );
+  const [currency, setCurrency] = useState("USD");
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
   const [editName, setEditName] = useState("");
-  const [editType, setEditType] = useState<"debit" | "credit">("debit");
+  const [editType, setEditType] = useState<"DEBIT_NORMAL" | "CREDIT_NORMAL">(
+    "DEBIT_NORMAL",
+  );
+  const [editCurrency, setEditCurrency] = useState("USD");
+  const [error, setError] = useState("");
 
   const [loading, setLoading] = useState(false);
   const rowsPerPage = 5;
@@ -83,59 +99,124 @@ export default function AccountManagementPage() {
   const filteredAccounts = useMemo(
     () =>
       accounts.filter((acc) =>
-        acc.name.toLowerCase().includes(query.toLowerCase())
+        acc.account_name.toLowerCase().includes(query.toLowerCase()),
       ),
-    [accounts, query]
+    [accounts, query],
   );
 
   const pages = Math.max(1, Math.ceil(filteredAccounts.length / rowsPerPage));
   const items = filteredAccounts.slice(
     (page - 1) * rowsPerPage,
-    page * rowsPerPage
+    page * rowsPerPage,
   );
 
   /**
    * Handlers
    */
-  function handleAddAccount(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setAccounts((prev) => [...prev, { name: name.trim(), type }]);
-    setName("");
-    setType("debit");
-    setPage(1);
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      if (!selectedMerchant) return;
 
-    addToast({
-      title: "Account created",
-    });
+      setLoading(true);
+      try {
+        const data = await getAccounts();
+        setAccounts(data);
+      } catch (error) {
+        addToast({
+          title: "Failed to fetch accounts",
+          variant: "flat",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, [selectedMerchant, getAccounts]);
+
+  async function handleAddAccount(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError("Account name is required");
+      return;
+    }
+
+    if (!selectedMerchant) {
+      addToast({
+        title: "Please select a merchant first",
+        variant: "flat",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await createAccount({
+        account_name: name.trim(),
+        account_type: type,
+        currency,
+      });
+
+      // Fetch updated accounts after successful creation
+      const updatedAccounts = await getAccounts();
+      setAccounts(updatedAccounts);
+
+      // Reset form
+      setName("");
+      setType("DEBIT_NORMAL");
+      setCurrency("USD");
+      setPage(1);
+      setError("");
+
+      addToast({
+        title: "Account created successfully",
+      });
+    } catch (error) {
+      addToast({
+        title: "Failed to create account",
+        variant: "flat",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleDeleteAccount(account: Account) {
     setAccountToDelete(account);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!accountToDelete) return;
-    setAccounts((prev) =>
-      prev.filter(
-        (acc) =>
-          !(
-            acc.name === accountToDelete.name &&
-            acc.type === accountToDelete.type
-          )
-      )
-    );
-    setAccountToDelete(null);
-    if (items.length === 1 && page > 1) setPage(page - 1);
-    addToast({
-      title: "Account deleted",
-    });
+
+    setLoading(true);
+    try {
+      await deleteAccount(accountToDelete.account_id);
+
+      // Fetch updated accounts after successful deletion
+      const updatedAccounts = await getAccounts();
+      setAccounts(updatedAccounts);
+
+      setAccountToDelete(null);
+      if (items.length === 1 && page > 1) setPage(page - 1);
+
+      addToast({
+        title: "Account deleted successfully",
+      });
+    } catch (error) {
+      addToast({
+        title: "Failed to delete account",
+        variant: "flat",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleEditAccount(account: Account) {
     setAccountToEdit(account);
-    setEditName(account.name);
-    setEditType(account.type);
+    setEditName(account.account_name);
+    setEditType(account.account_type);
+    setEditCurrency(account.currency);
   }
 
   function confirmEdit(e: React.FormEvent) {
@@ -143,28 +224,21 @@ export default function AccountManagementPage() {
     if (!editName.trim() || !accountToEdit) return;
     setAccounts((prev) =>
       prev.map((acc) =>
-        acc.name === accountToEdit.name && acc.type === accountToEdit.type
-          ? { name: editName.trim(), type: editType }
-          : acc
-      )
+        acc.account_id === accountToEdit.account_id
+          ? {
+              ...acc,
+              account_name: editName.trim(),
+              account_type: editType,
+              currency: editCurrency,
+            }
+          : acc,
+      ),
     );
     setAccountToEdit(null);
     addToast({
       title: "Account updated successfully",
     });
   }
-
-  /**
-   * Skeleton loading demo (optional)
-   */
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const isNameValid = name.trim().length > 0;
-  const nameError = !isNameValid ? "Account name is required" : "";
 
   return (
     <DefaultLayout>
@@ -189,7 +263,7 @@ export default function AccountManagementPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
             Account Management
@@ -231,8 +305,8 @@ export default function AccountManagementPage() {
                         value={name}
                         onChange={(e) => {
                           setName(e.target.value);
+                          setError("");
                         }}
-                        errorMessage={nameError}
                         classNames={{
                           input: "text-base",
                           inputWrapper: "h-10 sm:h-12",
@@ -240,42 +314,55 @@ export default function AccountManagementPage() {
                         autoFocus
                         data-testid="account-name-input"
                       />
-                      <p
-                        className="text-xs text-red-500 mt-1 min-h-[1.25rem]"
-                        data-testid="name-error"
-                      >
-                        {nameError}
-                      </p>
+                      {error && (
+                        <p
+                          className="text-red-500 text-sm mt-2"
+                          data-testid="error-message"
+                        >
+                          {error}
+                        </p>
+                      )}
                     </div>
                     <Select
                       aria-label="Account Type"
                       selectedKeys={[type]}
                       onChange={(e) =>
-                        setType(e.target.value as "debit" | "credit")
+                        setType(
+                          e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL",
+                        )
                       }
                       disallowEmptySelection
                       className="w-full"
+                      data-testid="account-type-select"
                     >
-                      <SelectItem key="debit">Debit</SelectItem>
-                      <SelectItem key="credit">Credit</SelectItem>
+                      <SelectItem key="DEBIT_NORMAL">Debit</SelectItem>
+                      <SelectItem key="CREDIT_NORMAL">Credit</SelectItem>
+                    </Select>
+                    <Select
+                      aria-label="Currency"
+                      selectedKeys={[currency]}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      disallowEmptySelection
+                      className="w-full"
+                      data-testid="currency-select"
+                    >
+                      <SelectItem key="USD">USD</SelectItem>
+                      <SelectItem key="EUR">EUR</SelectItem>
+                      <SelectItem key="GBP">GBP</SelectItem>
                     </Select>
                     <Button
                       type="submit"
                       color="primary"
                       className="w-full h-10 sm:h-12 text-base font-medium"
-                      disabled={!isNameValid}
-                      aria-disabled={!isNameValid}
+                      isDisabled={!selectedMerchant}
                       data-testid="add-account-button"
                     >
-                      <PlusIcon className="h-5 w-5 mr-2" /> Add Account
+                      Add Account
                     </Button>
                   </form>
                 </CardBody>
                 {accounts.length > 0 && (
-                  <CardFooter
-                    data-testid="total-accounts"
-                    className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6"
-                  >
+                  <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
                     Total accounts: {accounts.length}
                   </CardFooter>
                 )}
@@ -309,7 +396,7 @@ export default function AccountManagementPage() {
 
             <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
               <AnimatePresence mode="wait">
-                {loading ? (
+                {loading && selectedMerchant ? (
                   <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
@@ -327,7 +414,34 @@ export default function AccountManagementPage() {
                       />
                     ))}
                   </motion.div>
-                ) : filteredAccounts.length > 0 ? (
+                ) : !selectedMerchant || accounts.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center gap-3 py-14 text-center"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    >
+                      <BanknotesIcon className="h-12 w-12 text-gray-400" />
+                    </motion.div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      {!selectedMerchant
+                        ? "Please select a merchant first"
+                        : "No accounts found"}
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">
+                      {!selectedMerchant
+                        ? "Select a merchant to view and manage accounts"
+                        : "Start by adding your first account using the form"}
+                    </p>
+                  </motion.div>
+                ) : (
                   <motion.div
                     key="table"
                     variants={scaleIn}
@@ -366,7 +480,7 @@ export default function AccountManagementPage() {
                                 >
                                   {p}
                                 </Button>
-                              )
+                              ),
                             )}
                             <Button
                               size="sm"
@@ -386,6 +500,10 @@ export default function AccountManagementPage() {
                         <TableHeader>
                           <TableColumn align="start">Account Name</TableColumn>
                           <TableColumn align="center">Account Type</TableColumn>
+                          <TableColumn align="center">Currency</TableColumn>
+                          <TableColumn align="end">
+                            Available Balance
+                          </TableColumn>
                           <TableColumn align="center" width={140}>
                             Actions
                           </TableColumn>
@@ -393,23 +511,31 @@ export default function AccountManagementPage() {
                         <TableBody items={items} emptyContent={<></>}>
                           {(acc: Account) => (
                             <TableRow
-                              key={acc.name + acc.type}
+                              key={acc.account_id}
                               className="focus:outline-primary"
                             >
                               <TableCell className="font-medium">
-                                {acc.name}
+                                {acc.account_name}
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${acc.type === "debit" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${acc.account_type === "DEBIT_NORMAL" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                                 >
-                                  {acc.type === "debit" ? (
+                                  {acc.account_type === "DEBIT_NORMAL" ? (
                                     <PlusIcon className="h-3 w-3" />
                                   ) : (
                                     <MinusIcon className="h-3 w-3" />
                                   )}
-                                  {acc.type === "debit" ? "Debit" : "Credit"}
+                                  {acc.account_type === "DEBIT_NORMAL"
+                                    ? "Debit"
+                                    : "Credit"}
                                 </span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {acc.currency}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {acc.available_balance}
                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-2 justify-center">
@@ -421,7 +547,7 @@ export default function AccountManagementPage() {
                                       size="sm"
                                       onPress={() => handleEditAccount(acc)}
                                       className="text-primary-500 hover:text-primary-600 focus:outline focus:outline-2 focus:outline-primary"
-                                      aria-label={`Edit account ${acc.name}`}
+                                      aria-label={`Edit account ${acc.account_name}`}
                                       data-testid="edit-button"
                                     >
                                       <PencilSquareIcon className="h-4 w-4" />
@@ -435,7 +561,7 @@ export default function AccountManagementPage() {
                                       size="sm"
                                       onPress={() => handleDeleteAccount(acc)}
                                       className="text-danger-500 hover:text-danger-600 focus:outline focus:outline-2 focus:outline-danger"
-                                      aria-label={`Delete account ${acc.name}`}
+                                      aria-label={`Delete account ${acc.account_name}`}
                                       data-testid="delete-button"
                                     >
                                       <TrashIcon className="h-4 w-4" />
@@ -448,32 +574,6 @@ export default function AccountManagementPage() {
                         </TableBody>
                       </Table>
                     </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="empty"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
-                  >
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
-                    >
-                      <BanknotesIcon className="h-12 w-12 text-gray-400" />
-                    </motion.div>
-                    <p
-                      data-testid="no-accounts-found"
-                      className="text-gray-500 dark:text-gray-400 text-lg font-medium"
-                    >
-                      No accounts found
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Start by adding your first account using the form
-                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -494,8 +594,10 @@ export default function AccountManagementPage() {
           <ModalBody>
             <p>
               Are you sure you want to delete{" "}
-              <span className="font-medium">{accountToDelete?.name}</span>? This
-              action cannot be undone.
+              <span className="font-medium">
+                {accountToDelete?.account_name}
+              </span>
+              ? This action cannot be undone.
             </p>
           </ModalBody>
           <ModalFooter>
@@ -536,12 +638,22 @@ export default function AccountManagementPage() {
               aria-label="Edit Account Type"
               selectedKeys={[editType]}
               onChange={(e) =>
-                setEditType(e.target.value as "debit" | "credit")
+                setEditType(e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL")
               }
               data-testid="edit-type-select"
             >
-              <SelectItem key="debit">Debit</SelectItem>
-              <SelectItem key="credit">Credit</SelectItem>
+              <SelectItem key="DEBIT_NORMAL">Debit</SelectItem>
+              <SelectItem key="CREDIT_NORMAL">Credit</SelectItem>
+            </Select>
+            <Select
+              aria-label="Edit Currency"
+              selectedKeys={[editCurrency]}
+              onChange={(e) => setEditCurrency(e.target.value)}
+              data-testid="edit-currency-select"
+            >
+              <SelectItem key="USD">USD</SelectItem>
+              <SelectItem key="EUR">EUR</SelectItem>
+              <SelectItem key="GBP">GBP</SelectItem>
             </Select>
           </ModalBody>
           <ModalFooter>

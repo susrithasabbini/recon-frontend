@@ -35,13 +35,13 @@ function HeroIllustration() {
     >
       <defs>
         <linearGradient id="node-gradient" x1="0" y1="0" x2="1" y2="1">
-          <stop stop-color="#6366F1" />
-          <stop offset="1" stop-color="#38BDF8" />
+          <stop stopColor="#6366F1" />
+          <stop offset="1" stopColor="#38BDF8" />
         </linearGradient>
 
         <linearGradient id="arrow-gradient" x1="0" y1="0" x2="1" y2="0">
-          <stop stop-color="#38BDF8" />
-          <stop offset="1" stop-color="#6366F1" />
+          <stop stopColor="#38BDF8" />
+          <stop offset="1" stopColor="#6366F1" />
         </linearGradient>
 
         <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -49,8 +49,8 @@ function HeroIllustration() {
             dx="0"
             dy="4"
             stdDeviation="6"
-            flood-color="#6366F1"
-            flood-opacity="0.08"
+            floodColor="#6366F1"
+            floodOpacity="0.08"
           />
         </filter>
 
@@ -73,7 +73,7 @@ function HeroIllustration() {
         rx="310"
         ry="90"
         fill="url(#node-gradient)"
-        fill-opacity="0.10"
+        fillOpacity="0.10"
         filter="url(#shadow)"
       />
 
@@ -84,7 +84,7 @@ function HeroIllustration() {
           r="38"
           fill="#fff"
           stroke="url(#node-gradient)"
-          stroke-width="3"
+          strokeWidth="3"
         />
         <circle
           cx="320"
@@ -92,7 +92,7 @@ function HeroIllustration() {
           r="38"
           fill="#fff"
           stroke="url(#node-gradient)"
-          stroke-width="3"
+          strokeWidth="3"
         />
         <circle
           cx="500"
@@ -100,16 +100,16 @@ function HeroIllustration() {
           r="38"
           fill="#fff"
           stroke="url(#node-gradient)"
-          stroke-width="3"
+          strokeWidth="3"
         />
       </g>
 
       <text
         x="140"
         y="116"
-        text-anchor="middle"
-        font-size="18"
-        font-weight="bold"
+        textAnchor="middle"
+        fontSize="18"
+        fontWeight="bold"
         fill="#6366F1"
       >
         OMS
@@ -117,9 +117,9 @@ function HeroIllustration() {
       <text
         x="320"
         y="96"
-        text-anchor="middle"
-        font-size="18"
-        font-weight="bold"
+        textAnchor="middle"
+        fontSize="18"
+        fontWeight="bold"
         fill="#38BDF8"
       >
         PSP
@@ -127,9 +127,9 @@ function HeroIllustration() {
       <text
         x="500"
         y="116"
-        text-anchor="middle"
-        font-size="18"
-        font-weight="bold"
+        textAnchor="middle"
+        fontSize="18"
+        fontWeight="bold"
         fill="#6366F1"
       >
         Bank
@@ -138,9 +138,9 @@ function HeroIllustration() {
       <path
         d="M178 110 Q230 60 282 90"
         stroke="url(#arrow-gradient)"
-        stroke-width="4"
+        strokeWidth="4"
         fill="none"
-        marker-end="url(#arrowhead)"
+        markerEnd="url(#arrowhead)"
       >
         <animate
           attributeName="stroke-dashoffset"
@@ -155,9 +155,9 @@ function HeroIllustration() {
       <path
         d="M358 90 Q410 90 462 110"
         stroke="url(#arrow-gradient)"
-        stroke-width="4"
+        strokeWidth="4"
         fill="none"
-        marker-end="url(#arrowhead)"
+        markerEnd="url(#arrowhead)"
       >
         <animate
           attributeName="stroke-dashoffset"
@@ -172,7 +172,7 @@ function HeroIllustration() {
       <path
         d="M490 110 l12 12 l20 -24"
         stroke="#22C55E"
-        stroke-width="4"
+        strokeWidth="4"
         fill="none"
       >
         <animate
