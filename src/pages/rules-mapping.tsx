@@ -10,13 +10,11 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { addToast } from "@heroui/toast";
+import { useDefaultContext } from "@/contexts/default-context";
+import api from "@/config/axios";
 
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  PencilSquareIcon,
-  TrashIcon,
-  ArrowsRightLeftIcon,
-} from "@heroicons/react/24/outline";
+import { TrashIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import DefaultLayout from "@/layouts/default";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
@@ -30,12 +28,32 @@ import {
   TableRow,
 } from "@heroui/table";
 
-// Mock account data (replace with real data as needed)
-const mockAccounts = [
-  { id: "1", name: "OMS Account" },
-  { id: "2", name: "PSP Account" },
-  { id: "3", name: "Bank Account" },
-];
+interface AccountDetails {
+  account_id: string;
+  account_name: string;
+  merchant_id: string;
+}
+
+interface ReconRule {
+  id: string;
+  account_one_id: string;
+  account_two_id: string;
+  created_at: string;
+  updated_at: string;
+  accountOne: AccountDetails;
+  accountTwo: AccountDetails;
+}
+
+interface Account {
+  account_id: string;
+  merchant_id: string;
+  account_name: string;
+  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
+  currency: string;
+  posted_balance: string;
+  pending_balance: string;
+  available_balance: string;
+}
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -59,174 +77,164 @@ const scaleIn = {
   },
 };
 
-const skeletonVariants = {
-  shimmer: {
-    backgroundPosition: ["-200px 0", "200px 0"],
-    transition: {
-      repeat: Infinity,
-      duration: 1.2,
-      ease: "linear",
-    },
-  },
-};
-
 export default function RulesMappingPage() {
-  const [mappings, setMappings] = useState<
-    {
-      id: string;
-      source: string;
-      target: string;
-    }[]
-  >([]);
+  const { selectedMerchant, getAccounts } = useDefaultContext();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [mappings, setMappings] = useState<ReconRule[]>([]);
   const [newMapping, setNewMapping] = useState({ source: "", target: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [mappingToDelete, setMappingToDelete] = useState<{
-    id: string;
-    source: string;
-    target: string;
-  } | null>(null);
-  const [mappingToEdit, setMappingToEdit] = useState<{
-    id: string;
-    source: string;
-    target: string;
-  } | null>(null);
+  const [mappingToDelete, setMappingToDelete] = useState<ReconRule | null>(
+    null,
+  );
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
 
-  // Simulate loading on mount and after add/delete
+  // Fetch accounts when merchant is selected
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchAccounts = async () => {
+      if (!selectedMerchant) return;
+
+      setLoading(true);
+      try {
+        const data = await getAccounts();
+        setAccounts(data);
+      } catch (error) {
+        addToast({
+          title: "Failed to fetch accounts",
+          variant: "flat",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, [selectedMerchant, getAccounts]);
+
+  // Fetch existing mappings
+  useEffect(() => {
+    const fetchMappings = async () => {
+      if (!selectedMerchant) return;
+
+      setLoading(true);
+      try {
+        const { data } = await api.get<ReconRule[]>(
+          `/merchants/${selectedMerchant}/recon-rules`,
+        );
+        setMappings(data);
+      } catch (error) {
+        addToast({
+          title: "Failed to fetch mappings",
+          variant: "flat",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMappings();
+  }, [selectedMerchant]);
 
   // Handlers
-  const handleAddMapping = (e: React.FormEvent) => {
+  const handleAddMapping = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMapping.source || !newMapping.target) return;
+    if (!selectedMerchant) {
+      addToast({
+        title: "Please select a merchant first",
+        variant: "flat",
+      });
+      return;
+    }
+
+    if (!newMapping.source || !newMapping.target) {
+      setError("Please select both source and target accounts");
+      return;
+    }
+
     if (newMapping.source === newMapping.target) {
       setError("Source and target accounts cannot be the same");
       return;
     }
+
     const mappingExists = mappings.some(
-      (m) => m.source === newMapping.source && m.target === newMapping.target
+      (m) =>
+        (m.account_one_id === newMapping.source &&
+          m.account_two_id === newMapping.target) ||
+        (m.account_one_id === newMapping.target &&
+          m.account_two_id === newMapping.source),
     );
+
     if (mappingExists) {
       setError("This mapping already exists");
       return;
     }
-    setLoading(true);
-    setTimeout(() => {
-      setMappings([
-        ...mappings,
-        {
-          id: Date.now().toString(),
-          source: newMapping.source,
-          target: newMapping.target,
-        },
-      ]);
+
+    try {
+      setLoading(true);
+      await api.post<ReconRule>(`/merchants/${selectedMerchant}/recon-rules`, {
+        account_one_id: newMapping.source,
+        account_two_id: newMapping.target,
+      });
+
+      // Fetch updated mappings after successful creation
+      const { data: updatedMappings } = await api.get<ReconRule[]>(
+        `/merchants/${selectedMerchant}/recon-rules`,
+      );
+      setMappings(updatedMappings);
+
+      // Reset form
       setNewMapping({ source: "", target: "" });
       setError("");
-      setLoading(false);
       addToast({
-        title: "Mapping created",
+        title: "Mapping created successfully",
       });
-    }, 700);
+    } catch (error) {
+      addToast({
+        title: "Failed to create mapping",
+        variant: "flat",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (mapping: {
-    id: string;
-    source: string;
-    target: string;
-  }) => {
+  const handleDelete = (mapping: ReconRule) => {
     setMappingToDelete(mapping);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!mappingToDelete) return;
     setLoading(true);
-    setTimeout(() => {
-      setMappings((prev) => prev.filter((m) => m.id !== mappingToDelete.id));
-      setMappingToDelete(null);
-      setLoading(false);
-      addToast({
-        title: "Mapping deleted",
-      });
-    }, 700);
-  };
-
-  const handleEdit = (mapping: {
-    id: string;
-    source: string;
-    target: string;
-  }) => {
-    setMappingToEdit(mapping);
-  };
-
-  const handleSaveEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mappingToEdit) return;
-    if (mappingToEdit.source === mappingToEdit.target) {
-      setError("Source and target accounts cannot be the same");
-      return;
-    }
-    const mappingExists = mappings.some(
-      (m) =>
-        m.id !== mappingToEdit.id &&
-        m.source === mappingToEdit.source &&
-        m.target === mappingToEdit.target
-    );
-    if (mappingExists) {
-      setError("This mapping already exists");
-      return;
-    }
-    setLoading(true);
-    setTimeout(() => {
-      setMappings((prev) =>
-        prev.map((m) =>
-          m.id === mappingToEdit.id
-            ? {
-                ...m,
-                source: mappingToEdit.source,
-                target: mappingToEdit.target,
-              }
-            : m
-        )
+    try {
+      await api.delete(
+        `/merchants/${selectedMerchant}/recon-rules/${mappingToDelete.id}`,
       );
-      setMappingToEdit(null);
-      setError("");
-      setLoading(false);
+
+      // Fetch updated mappings after successful deletion
+      const { data: updatedMappings } = await api.get<ReconRule[]>(
+        `/merchants/${selectedMerchant}/recon-rules`,
+      );
+      setMappings(updatedMappings);
+
+      setMappingToDelete(null);
       addToast({
-        title: "Mapping updated successfully",
+        title: "Mapping deleted successfully",
       });
-    }, 700);
+    } catch (error) {
+      addToast({
+        title: "Failed to delete mapping",
+        variant: "flat",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Filter available target accounts based on selected source
   const getAvailableTargetAccounts = (sourceId: string) => {
-    return mockAccounts.filter((acc) => acc.id !== sourceId);
+    return accounts.filter((acc) => acc.account_id !== sourceId);
   };
-
-  // Skeleton loader for mapping list
-  const MappingSkeleton = () => (
-    <tbody>
-      {[...Array(3)].map((_, i) => (
-        <tr key={i}>
-          {[...Array(3)].map((_, j) => (
-            <td key={j} className="px-4 py-3">
-              <motion.div
-                className="h-5 w-full rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800"
-                style={{ backgroundSize: "400px 100%" }}
-                variants={skeletonVariants}
-                animate="shimmer"
-              />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </tbody>
-  );
 
   const pages = Math.max(1, Math.ceil(mappings.length / rowsPerPage));
   const items = mappings.slice((page - 1) * rowsPerPage, page * rowsPerPage);
@@ -254,7 +262,7 @@ export default function RulesMappingPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
             Rules Mapping
@@ -305,10 +313,13 @@ export default function RulesMappingPage() {
                       }}
                       className="w-full"
                       disallowEmptySelection
+                      isDisabled={loading}
                       data-testid="source-account-select"
                     >
-                      {mockAccounts.map((acc) => (
-                        <SelectItem key={acc.id}>{acc.name}</SelectItem>
+                      {accounts.map((acc) => (
+                        <SelectItem key={acc.account_id}>
+                          {acc.account_name}
+                        </SelectItem>
                       ))}
                     </Select>
                     <Select
@@ -322,14 +333,16 @@ export default function RulesMappingPage() {
                         setError("");
                       }}
                       className="w-full"
-                      isDisabled={!newMapping.source}
+                      isDisabled={!newMapping.source || loading}
                       disallowEmptySelection
                       data-testid="target-account-select"
                     >
                       {getAvailableTargetAccounts(newMapping.source).map(
                         (acc) => (
-                          <SelectItem key={acc.id}>{acc.name}</SelectItem>
-                        )
+                          <SelectItem key={acc.account_id}>
+                            {acc.account_name}
+                          </SelectItem>
+                        ),
                       )}
                     </Select>
                     {error && (
@@ -344,7 +357,10 @@ export default function RulesMappingPage() {
                       type="submit"
                       color="primary"
                       className="w-full h-10 sm:h-12 text-base font-medium"
-                      isDisabled={!newMapping.source || !newMapping.target}
+                      isDisabled={
+                        !newMapping.source || !newMapping.target || loading
+                      }
+                      isLoading={loading}
                       data-testid="add-mapping-button"
                     >
                       Add Mapping
@@ -373,9 +389,25 @@ export default function RulesMappingPage() {
             </motion.div>
             <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
               <AnimatePresence mode="wait">
-                {loading ? (
-                  <MappingSkeleton />
-                ) : mappings.length === 0 ? (
+                {loading && selectedMerchant ? (
+                  <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    data-testid="loading-skeleton"
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : !selectedMerchant || mappings.length === 0 ? (
                   <motion.div
                     key="empty"
                     variants={scaleIn}
@@ -392,10 +424,14 @@ export default function RulesMappingPage() {
                       <ArrowsRightLeftIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      No mappings found
+                      {!selectedMerchant
+                        ? "Please select a merchant first"
+                        : "No mappings found"}
                     </p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Start by adding your first mapping using the form
+                      {!selectedMerchant
+                        ? "Select a merchant to view and manage mappings"
+                        : "Start by adding your first mapping using the form"}
                     </p>
                   </motion.div>
                 ) : (
@@ -436,7 +472,7 @@ export default function RulesMappingPage() {
                                 >
                                   {p}
                                 </Button>
-                              )
+                              ),
                             )}
                             <Button
                               size="sm"
@@ -461,26 +497,13 @@ export default function RulesMappingPage() {
                           {(m) => (
                             <TableRow key={m.id}>
                               <TableCell className="whitespace-nowrap text-primary font-medium">
-                                {mockAccounts.find((a) => a.id === m.source)
-                                  ?.name || "?"}
+                                {m.accountOne.account_name}
                               </TableCell>
                               <TableCell className="whitespace-nowrap text-secondary font-medium">
-                                {mockAccounts.find((a) => a.id === m.target)
-                                  ?.name || "?"}
+                                {m.accountTwo.account_name}
                               </TableCell>
                               <TableCell className="whitespace-nowrap text-center">
                                 <div className="flex gap-2 justify-center">
-                                  <Tooltip content="Edit" placement="top">
-                                    <Button
-                                      isIconOnly
-                                      variant="light"
-                                      color="warning"
-                                      onPress={() => handleEdit(m)}
-                                      aria-label="Edit"
-                                    >
-                                      <PencilSquareIcon className="w-5 h-5" />
-                                    </Button>
-                                  </Tooltip>
                                   <Tooltip content="Delete" placement="top">
                                     <Button
                                       isIconOnly
@@ -488,6 +511,7 @@ export default function RulesMappingPage() {
                                       color="danger"
                                       onPress={() => handleDelete(m)}
                                       aria-label="Delete"
+                                      data-testid="delete-button"
                                     >
                                       <TrashIcon className="w-5 h-5" />
                                     </Button>
@@ -507,87 +531,6 @@ export default function RulesMappingPage() {
         </div>
       </motion.section>
 
-      {/* Edit Modal */}
-      <Modal
-        isOpen={mappingToEdit !== null}
-        onClose={() => {
-          setMappingToEdit(null);
-          setError("");
-        }}
-        size="sm"
-        aria-label="Edit mapping"
-      >
-        <ModalContent as={motion.form} onSubmit={handleSaveEdit}>
-          <ModalHeader>Edit Mapping</ModalHeader>
-          <ModalBody className="space-y-5">
-            <Select
-              label="Source Account"
-              aria-label="Source Account"
-              placeholder="Select source"
-              selectedKeys={mappingToEdit?.source ? [mappingToEdit.source] : []}
-              onSelectionChange={(keys: any) => {
-                const val = Array.from(keys)[0] as string;
-                setMappingToEdit((prev) =>
-                  prev ? { ...prev, source: val, target: "" } : null
-                );
-                setError("");
-              }}
-              className="w-full"
-              disallowEmptySelection
-              data-testid="edit-source-select"
-            >
-              {mockAccounts.map((acc) => (
-                <SelectItem key={acc.id}>{acc.name}</SelectItem>
-              ))}
-            </Select>
-            <Select
-              label="Target Account"
-              placeholder="Select target"
-              aria-label="Target Account"
-              selectedKeys={mappingToEdit?.target ? [mappingToEdit.target] : []}
-              onSelectionChange={(keys: any) => {
-                const val = Array.from(keys)[0] as string;
-                setMappingToEdit((prev) =>
-                  prev ? { ...prev, target: val } : null
-                );
-                setError("");
-              }}
-              className="w-full"
-              isDisabled={!mappingToEdit?.source}
-              disallowEmptySelection
-              data-testid="edit-target-select"
-            >
-              {getAvailableTargetAccounts(mappingToEdit?.source || "").map(
-                (acc) => (
-                  <SelectItem key={acc.id}>{acc.name}</SelectItem>
-                )
-              )}
-            </Select>
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              variant="light"
-              onPress={() => {
-                setMappingToEdit(null);
-                setError("");
-              }}
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              type="submit"
-              isDisabled={!mappingToEdit?.source || !mappingToEdit?.target}
-              data-testid="save-edit-button"
-            >
-              Save Changes
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={mappingToDelete !== null}
@@ -601,17 +544,11 @@ export default function RulesMappingPage() {
             <p>
               Are you sure you want to delete the mapping between{" "}
               <span className="font-medium">
-                {
-                  mockAccounts.find((a) => a.id === mappingToDelete?.source)
-                    ?.name
-                }
+                {mappingToDelete?.accountOne.account_name}
               </span>{" "}
               and{" "}
               <span className="font-medium">
-                {
-                  mockAccounts.find((a) => a.id === mappingToDelete?.target)
-                    ?.name
-                }
+                {mappingToDelete?.accountTwo.account_name}
               </span>
               ? This action cannot be undone.
             </p>

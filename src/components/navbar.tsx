@@ -10,6 +10,7 @@ import {
 } from "@heroui/navbar";
 import { link as linkStyles } from "@heroui/theme";
 import clsx from "clsx";
+import MerchantSelect from "./merchant-select";
 
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Logo } from "@/components/icons";
@@ -41,7 +42,7 @@ export const Navbar = () => {
               <Link
                 className={clsx(
                   linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium"
+                  "data-[active=true]:text-primary data-[active=true]:font-medium",
                 )}
                 color="foreground"
                 href={item.href}
@@ -75,6 +76,11 @@ export const Navbar = () => {
           ))}
         </div>
       </NavbarMenu>
+      <NavbarContent justify="end">
+        <NavbarItem>
+          <MerchantSelect className="w-48" />
+        </NavbarItem>
+      </NavbarContent>
     </HeroUINavbar>
   );
 };
