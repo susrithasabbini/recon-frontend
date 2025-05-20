@@ -163,6 +163,7 @@ export default function FileUploadPage() {
                           className="sr-only"
                           disabled={loading}
                           id="oms-upload"
+                          data-testid="oms-file-input"
                         />
                         <label
                           htmlFor="oms-upload"
@@ -171,6 +172,7 @@ export default function FileUploadPage() {
                             border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
                             hover:file:bg-blue-100
                           `}
+                          data-testid="oms-file-name"
                         >
                           {omsFilename || "No file chosen"}
                         </label>
@@ -186,6 +188,7 @@ export default function FileUploadPage() {
                           className="sr-only"
                           disabled={loading}
                           id="psp-upload"
+                          data-testid="psp-file-input"
                         />
                         <label
                           htmlFor="psp-upload"
@@ -194,6 +197,7 @@ export default function FileUploadPage() {
                             border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
                             hover:file:bg-blue-100
                           `}
+                          data-testid="psp-file-name"
                         >
                           {pspFilename || "No file chosen"}
                         </label>
@@ -203,9 +207,15 @@ export default function FileUploadPage() {
                 </CardBody>
                 {(omsData.length > 1 || pspData.length > 1) && (
                   <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
-                    OMS rows: {omsData.length - 1 > 0 ? omsData.length - 1 : 0}{" "}
-                    | PSP rows:{" "}
-                    {pspData.length - 1 > 0 ? pspData.length - 1 : 0}
+                    <span data-testid="oms-row-count">
+                      OMS rows:{" "}
+                      {omsData.length - 1 > 0 ? omsData.length - 1 : 0}
+                    </span>{" "}
+                    |{" "}
+                    <span data-testid="psp-row-count">
+                      PSP rows:{" "}
+                      {pspData.length - 1 > 0 ? pspData.length - 1 : 0}
+                    </span>
                   </CardFooter>
                 )}
               </Card>
@@ -230,6 +240,7 @@ export default function FileUploadPage() {
                 }
                 className="w-40"
                 disallowEmptySelection
+                data-testid="data-type-select"
               >
                 <SelectItem key="OMS">OMS</SelectItem>
                 <SelectItem key="PSP">PSP</SelectItem>
@@ -252,14 +263,19 @@ export default function FileUploadPage() {
                     <Table
                       aria-label="Uploaded CSV Data"
                       className="min-w-full"
+                      data-testid="data-table"
                       bottomContent={
-                        <div className="flex w-full justify-center gap-2 py-4">
+                        <div
+                          className="flex w-full justify-center gap-2 py-4"
+                          data-testid="pagination"
+                        >
                           <Button
                             size="sm"
                             variant="flat"
                             onPress={() => setPage((p) => Math.max(p - 1, 1))}
                             isDisabled={page === 1}
                             className="min-w-[100px]"
+                            data-testid="previous-page"
                           >
                             Previous
                           </Button>
@@ -271,6 +287,9 @@ export default function FileUploadPage() {
                                 variant={p === page ? "flat" : "light"}
                                 className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
                                 onPress={() => setPage(p)}
+                                data-testid={
+                                  p === page ? "current-page" : undefined
+                                }
                               >
                                 {p}
                               </Button>
@@ -284,6 +303,7 @@ export default function FileUploadPage() {
                             }
                             isDisabled={page === pages}
                             className="min-w-[100px]"
+                            data-testid="next-page"
                           >
                             Next
                           </Button>
@@ -313,6 +333,7 @@ export default function FileUploadPage() {
                       animate="visible"
                       exit="hidden"
                       className="flex flex-col items-center gap-3 py-14 text-center"
+                      data-testid="empty-state"
                     >
                       <motion.div
                         animate={{ y: [0, -10, 0] }}
