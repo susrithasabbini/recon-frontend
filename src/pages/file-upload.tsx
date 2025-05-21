@@ -525,10 +525,11 @@ export default function FileUploadPage() {
               </Select>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full"> {/* Removed min-height from Card */}
-              <AnimatePresence mode="wait">
-                {loading && selectedMerchant ? (
-                  <motion.div
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+                <AnimatePresence mode="wait">
+                  {loading && selectedMerchant ? (
+                    <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -668,8 +669,9 @@ export default function FileUploadPage() {
                       </TableBody>
                     </Table>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              </div> {/* Closing new wrapper */}
             </Card>
             {/* Account Entries Table */}
             <motion.div
@@ -712,10 +714,11 @@ export default function FileUploadPage() {
                 </div>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6"> {/* Removed min-height from Card */}
-              <AnimatePresence mode="wait">
-                {loading && selectedMerchant ? (
-                  <motion.div
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+                <AnimatePresence mode="wait">
+                  {loading && selectedMerchant ? (
+                    <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -877,8 +880,9 @@ export default function FileUploadPage() {
                       </TableBody>
                     </Table>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              </div> {/* Closing new wrapper */}
             </Card>
           </main>
         </div>
