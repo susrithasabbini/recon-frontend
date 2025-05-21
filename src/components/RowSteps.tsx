@@ -137,7 +137,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
 
     return (
       <div className="flex items-center gap-x-4 w-2/3">
-        <Button
+        {/* <Button
           isIconOnly
           variant="flat"
           onPress={handlePrevious}
@@ -145,7 +145,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
           aria-label="Previous step"
         >
           <ChevronLeftIcon className="h-5 w-5" />
-        </Button>
+        </Button> */}
         <nav
           aria-label="Progress"
           className="flex flex-grow justify-center -my-4 overflow-x-auto py-4"
@@ -254,7 +254,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
             })}
           </ol>
         </nav>
-        <Button
+        {/* <Button
           isIconOnly
           variant="flat"
           onPress={handleNext}
@@ -262,7 +262,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
           aria-label="Next step"
         >
           <ChevronRightIcon className="h-5 w-5" />
-        </Button>
+        </Button> */}
       </div>
     );
   },
