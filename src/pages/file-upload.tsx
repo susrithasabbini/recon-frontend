@@ -8,6 +8,7 @@ import {
   TableColumn,
   TableRow,
   TableCell,
+  SortDescriptor,
 } from "@heroui/table";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pagination } from "@heroui/pagination";
@@ -125,6 +126,15 @@ export default function FileUploadPage() {
   } | null>(null);
   const rowsPerPage = 10; // Changed to 10
 
+  const [stagingSortDescriptor, setStagingSortDescriptor] = useState<SortDescriptor>({
+    column: "created_at",
+    direction: "descending",
+  });
+  const [entriesSortDescriptor, setEntriesSortDescriptor] = useState<SortDescriptor>({
+    column: "created_at",
+    direction: "descending",
+  });
+
   // Reset state when merchant changes
   useEffect(() => {
     setSelectedAccount("");
@@ -177,7 +187,6 @@ export default function FileUploadPage() {
         const { data } = await api.get<StagingEntry[]>(
           `/accounts/${selectedAccount}/staging-entries`
         );
-        console.log("Fetched Staging Entries:", data);
         setStagingEntries(data);
       } catch (error) {
         console.error("Error fetching staging entries:", error);
@@ -209,7 +218,6 @@ export default function FileUploadPage() {
         const { data } = await api.get<AccountEntry[]>(
           `/accounts/${selectedAccount}/entries`
         );
-        console.log("Fetched Account Entries:", data);
         setAccountEntries(data);
       } catch (error) {
         console.error("Error fetching account entries:", error);
@@ -322,14 +330,12 @@ export default function FileUploadPage() {
 
   // Memoized filtered staging entries
   const filteredStagingEntries = useMemo(() => {
-    console.log("Staging Entries (before filter):", stagingEntries);
     let result;
     if (stagingStatusFilter === "all") {
       result = stagingEntries;
     } else {
       result = stagingEntries.filter(entry => entry.status === stagingStatusFilter);
     }
-    console.log("Filtered Staging Entries:", result);
     return result;
   }, [stagingEntries, stagingStatusFilter]);
 
@@ -338,25 +344,34 @@ export default function FileUploadPage() {
     Math.ceil(filteredStagingEntries.length / rowsPerPage)
   );
   const stagingItems = useMemo(() => {
-    console.log("Filtered Staging Entries (for pagination):", filteredStagingEntries);
-    const items = filteredStagingEntries.slice(
+    let sortedEntries = [...filteredStagingEntries];
+    if (stagingSortDescriptor.column) {
+      sortedEntries.sort((a, b) => {
+        const first = a[stagingSortDescriptor.column as keyof StagingEntry] as string;
+        const second = b[stagingSortDescriptor.column as keyof StagingEntry] as string;
+        let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
+
+        if (stagingSortDescriptor.direction === "descending") {
+          cmp *= -1;
+        }
+        return cmp;
+      });
+    }
+    const items = sortedEntries.slice(
       (stagingPage - 1) * rowsPerPage,
       stagingPage * rowsPerPage
     );
-    console.log("Staging Items (paginated):", items);
     return items;
-  }, [filteredStagingEntries, stagingPage, rowsPerPage]);
+  }, [filteredStagingEntries, stagingPage, rowsPerPage, stagingSortDescriptor]);
   
   // Memoized filtered account entries
   // Memoized filtered account entries
   const filteredAccountEntries = useMemo(() => {
-    console.log("Account Entries (before filter):", accountEntries);
     const result = accountEntries.filter(entry => {
       const entryStatusMatch = entriesStatusFilter === "all" || entry.status === entriesStatusFilter;
       const reconStatusMatch = entriesReconStatusFilter === "all" || entry.transaction?.status === entriesReconStatusFilter;
       return entryStatusMatch && reconStatusMatch;
     });
-    console.log("Filtered Account Entries:", result);
     return result;
   }, [accountEntries, entriesStatusFilter, entriesReconStatusFilter]);
 
@@ -365,14 +380,25 @@ export default function FileUploadPage() {
     Math.ceil(filteredAccountEntries.length / rowsPerPage)
   );
   const entriesItems = useMemo(() => {
-    console.log("Filtered Account Entries (for pagination):", filteredAccountEntries);
-    const items = filteredAccountEntries.slice(
+    let sortedEntries = [...filteredAccountEntries];
+    if (entriesSortDescriptor.column) {
+      sortedEntries.sort((a, b) => {
+        const first = a[entriesSortDescriptor.column as keyof AccountEntry] as any;
+        const second = b[entriesSortDescriptor.column as keyof AccountEntry] as any;
+        let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
+
+        if (entriesSortDescriptor.direction === "descending") {
+          cmp *= -1;
+        }
+        return cmp;
+      });
+    }
+    const items = sortedEntries.slice(
       (entriesPage - 1) * rowsPerPage,
       entriesPage * rowsPerPage
     );
-    console.log("Entries Items (paginated):", items);
     return items;
-  }, [filteredAccountEntries, entriesPage, rowsPerPage]);
+  }, [filteredAccountEntries, entriesPage, rowsPerPage, entriesSortDescriptor]);
 
   useEffect(() => {
     setStagingPage(1);
@@ -580,6 +606,8 @@ export default function FileUploadPage() {
                       aria-label="Staging Entries"
                       className="min-w-full"
                       data-testid="staging-entries-table"
+                      sortDescriptor={stagingSortDescriptor}
+                      onSortChange={setStagingSortDescriptor}
                       bottomContent={
                         stagingPages > 1 ? (
                           <div
@@ -602,7 +630,8 @@ export default function FileUploadPage() {
                         <TableColumn className="text-right">Amount</TableColumn>
                         <TableColumn>Currency</TableColumn>
                         <TableColumn className="text-center">Status</TableColumn>
-                        <TableColumn>Effective Date</TableColumn>
+                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
+                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
                       </TableHeader>
                       <TableBody items={stagingItems}>
                         {(entry) => (
@@ -630,6 +659,9 @@ export default function FileUploadPage() {
                             </TableCell>
                             <TableCell>
                               {new Date(entry.effective_date).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.created_at).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         )}
@@ -761,6 +793,8 @@ export default function FileUploadPage() {
                       aria-label="Account Entries"
                       className="min-w-full"
                       data-testid="account-entries-table"
+                      sortDescriptor={entriesSortDescriptor}
+                      onSortChange={setEntriesSortDescriptor}
                       bottomContent={
                         entriesPages > 1 ? (
                           <div
@@ -784,7 +818,8 @@ export default function FileUploadPage() {
                         <TableColumn>Currency</TableColumn>
                         <TableColumn className="text-center">Entry Status</TableColumn>
                         <TableColumn className="text-center">Recon Status</TableColumn>
-                        <TableColumn>Effective Date</TableColumn>
+                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
+                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
                       </TableHeader>
                       <TableBody items={entriesItems}>
                         {(entry) => (
@@ -833,6 +868,9 @@ export default function FileUploadPage() {
                             </TableCell>
                             <TableCell>
                               {new Date(entry.effective_date).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.created_at).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         )}
