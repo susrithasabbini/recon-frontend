@@ -4,14 +4,14 @@
 
 - `accounts`: List of account objects with complete details including balances.
 - `name`, `type`, `currency`: Controlled values for the new account form.
-- `page`: Current page for paginated account list.
+- `page`: Current page for the paginated account list, managed by the `@heroui/pagination` component.
 - `query`: Search query for filtering accounts.
 - `accountToDelete`: Account object pending deletion (for modal).
 - `accountToEdit`: Account object pending edit (for modal).
-- `editName`, `editType`, `editCurrency`: Controlled values for the edit account modal.
+- `editName`: Controlled value for the edit account modal's name field. (Note: `editType`, `editCurrency` were mentioned in original doc but not present in the provided `account-creation.tsx` code for editing, only name is editable).
 - `error`: Error message state for form validation.
 - `loading`: Boolean, shows skeleton while fetching accounts or during operations.
-- `rowsPerPage`: Number of accounts per page.
+- `rowsPerPage`: Number of accounts per page, used to calculate total pages for pagination.
 - `selectedMerchant`: Current selected merchant from default context.
 
 ### **Context Integration**
@@ -21,69 +21,63 @@
   - `createAccount`: Function to create new accounts
   - `getAccounts`: Function to fetch accounts list
   - `deleteAccount`: Function to delete accounts
+  - `updateAccount`: Function to update account details (specifically name).
 
 ### **UI Structure**
 
 - **Header**: Title and description, animated with Framer Motion.
 - **Form (left column)**:
   - Card with input for account name, selects for type (Debit/Credit) and currency.
-  - Validation: Name required, type and currency always required.
+  - Validation: Name required.
   - Add button disabled if no merchant is selected.
-  - Shows error message only after form submission.
-  - On submit, validates merchant selection first, then name.
 - **Account List (right column)**:
   - Shows "Please select a merchant first" message if no merchant selected.
   - Search input for filtering accounts.
-  - Table with paginated, filtered accounts.
+  - Table (`@heroui/table`) displaying filtered accounts.
+  - Pagination: Uses `@heroui/pagination` component in the table's `bottomContent`, conditionally rendered if `pages > 1`. The `onChange` callback updates the `page` state.
   - Each row: name, type badge, currency, available balance, Edit and Delete buttons.
   - Loading skeleton shown only when merchant is selected and data is loading.
   - Empty state with animation if no accounts or no merchant selected.
 - **Modals**:
   - Delete confirmation modal with account name.
-  - Edit account modal with pre-filled values.
+  - Edit account modal for changing the account name.
 
 ### **Key Behaviors**
 
 - **Merchant Selection**:
-
   - Required before any account operations.
   - Shows appropriate message when no merchant selected.
   - Disables add button when no merchant selected.
-
 - **Account Creation**:
-
   - Validates merchant selection first.
   - Validates account name is not empty.
-  - Creates account with initial balances set to "0.0".
   - Fetches updated account list after creation.
   - Shows success/error toast messages.
-  - Resets form after successful creation.
-
+  - Resets form and `page` state to 1 after successful creation.
 - **Account Deletion**:
-
   - Shows confirmation modal with account name.
   - Fetches updated account list after deletion.
-  - Handles pagination when last item on page is deleted.
+  - Adjusts `page` state if the last item on a page (and not the first page) is deleted.
   - Shows success/error toast messages.
-
 - **Account Editing**:
-
-  - Opens modal with pre-filled values.
-  - Updates account details in the list.
-  - Shows success toast message.
-
+  - Opens modal with pre-filled account name.
+  - Updates account name in the list locally and via API.
+  - Shows success/error toast messages.
+- **Pagination**:
+  - The number of pages (`pages`) is calculated based on `filteredAccounts.length` and `rowsPerPage`.
+  - The `Pagination` component handles page navigation. `setPage` updates the current page, triggering re-render of `items`.
 - **State Management**:
-  - Always fetches fresh data from backend after create/delete operations.
-  - Maintains consistency between frontend and backend state.
+  - Fetches fresh data from backend after create/delete operations.
+  - Local state updates for immediate UI feedback (e.g., on edit).
   - Proper loading states during all operations.
-  - Error handling with user feedback.
+  - Error handling with user feedback via toasts and form errors.
 
 ### **Accessibility**
 
 - ARIA labels for all interactive elements.
 - Proper focus management in modals.
 - Keyboard navigation support.
-- Loading states communicated to screen readers.
+- Loading states communicated.
 
 ### **Error Handling**
 
@@ -92,89 +86,19 @@
 - Loading states during API operations.
 - Proper error messages for missing merchant selection.
 
-### **Test Cases**
-
-#### **Form Validation**
-
-- `account-name-input`: Input field for account name
-  - Should show error when empty on submit
-  - Should clear error when typing
-  - Should be required
-- `account-type-select`: Select field for account type
-  - Should default to "DEBIT_NORMAL"
-  - Should not allow empty selection
-  - Should toggle between "DEBIT_NORMAL" and "CREDIT_NORMAL"
-- `currency-select`: Select field for currency
-  - Should default to "USD"
-  - Should not allow empty selection
-  - Should toggle between available currencies
-- `add-account-button`: Submit button
-  - Should be disabled when no merchant selected
-  - Should be disabled when form is invalid
-  - Should show loading state during submission
+### **Test Cases (Relevant to Pagination)**
 
 #### **Account List**
 
-- `search-input`: Search field
-  - Should filter accounts by name
-  - Should be case-insensitive
-  - Should update results in real-time
 - `accounts-table`: Table component
-  - Should display accounts in paginated format
-  - Should show loading skeleton when loading
-  - Should show empty state when no accounts
-  - Should show merchant selection message when no merchant
-- `edit-button`: Edit action button
-  - Should open edit modal with pre-filled values
-  - Should be disabled during loading
-- `delete-button`: Delete action button
-  - Should open confirmation modal
-  - Should be disabled during loading
-
-#### **Modals**
-
-- Delete Confirmation Modal
-  - Should display account name
-  - Should have cancel and confirm buttons
-  - Should close on cancel
-  - Should trigger delete on confirm
-- Edit Modal
-  - Should pre-fill current account values
-  - Should validate on submit
-  - Should update account on save
-  - Should close on cancel
+  - Should display accounts in paginated format using `@heroui/pagination`.
+  - Pagination controls should appear only if total items exceed `rowsPerPage`.
+  - Clicking a page number or next/previous in pagination should display the correct set of items.
+- `edit-button`, `delete-button`: Actions should not reset pagination unless necessary (e.g., deleting last item on a page).
 
 #### **State Management**
 
-- Should fetch accounts when merchant is selected
-- Should update list after successful account creation
-- Should update list after successful account deletion
-- Should update list after successful account edit
-- Should handle pagination correctly after operations
-- Should maintain search state during operations
-
-#### **Error Scenarios**
-
-- Should handle API errors gracefully
-- Should show appropriate error messages
-- Should maintain form state on error
-- Should allow retry after error
-- Should handle network errors
-- Should handle validation errors
-
-#### **Accessibility**
-
-- Should maintain focus trap in modals
-- Should announce loading states
-- Should announce success/error messages
-- Should support keyboard navigation
-- Should have proper ARIA labels
-
-#### **Integration**
-
-- Should integrate with merchant context
-- Should handle merchant selection changes
-- Should sync with backend state
-- Should maintain data consistency
-
----
+- Should fetch accounts when merchant is selected.
+- Should update list and potentially pagination (if total pages change) after successful account creation/deletion/edit.
+- Should handle pagination correctly after operations (e.g., if an item is deleted from the current page).
+- Search state should be maintained during pagination changes and vice-versa.

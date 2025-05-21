@@ -5,26 +5,6 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { title, subtitle } from "@/components/primitives";
 
-const steps = [
-  {
-    title: "1. Account Creation",
-    description:
-      "Set up your accounts (e.g., Sales Revenue, PSP Holding, Bank Account).",
-    href: "/account-creation",
-  },
-  {
-    title: "2. Recon Rules Mapping",
-    description:
-      "Define how data flows and set up expectations between accounts.",
-    href: "/rules-mapping",
-  },
-  {
-    title: "3. File Upload",
-    description: "Upload OMS, PSP, and Bank data for reconciliation.",
-    href: "/file-upload",
-  },
-];
-
 function HeroIllustration() {
   return (
     <svg
@@ -191,7 +171,7 @@ function HeroIllustration() {
 export default function IndexPage() {
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-16 transition-colors duration-300">
+      <section className="flex flex-col items-center justify-center gap-16 transition-colors duration-300 h-full">
         {/* Hero Illustration */}
         <HeroIllustration />
         {/* Animated Intro Section */}
@@ -205,8 +185,9 @@ export default function IndexPage() {
             Accounting & Reconciliation Tool
           </h1>
           <p className={subtitle()}>
-            Gain real-time financial clarity and automate reconciliation with a
-            smart ledger system.
+            Our streamlined process guides you through setting up accounts,
+            mapping rules, and uploading files for efficient reconciliation.
+            Click below to begin.
           </p>
         </motion.div>
         {/* Animated Divider */}
@@ -217,53 +198,21 @@ export default function IndexPage() {
           transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
           style={{ transformOrigin: "center" }}
         />
-        {/* Step Navigation with Animation */}
+        {/* Get Started Button */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.15,
-              },
-            },
-          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
         >
-          {steps.map((step) => (
-            <motion.div
-              key={step.title}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: "0 4px 24px 0 rgba(60, 80, 180, 0.10)",
-              }}
-              transition={{ type: "spring", stiffness: 200, damping: 18 }}
-            >
-              <div className="h-full flex flex-col justify-between p-6 rounded-xl border border-blue-100 dark:border-neutral-800 shadow bg-white dark:bg-neutral-900 hover:border-blue-400 dark:hover:border-blue-300 transition-colors duration-300">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2 text-blue-800 dark:text-blue-200">
-                    {step.title}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    {step.description}
-                  </p>
-                </div>
-                <Button
-                  as={Link}
-                  color="primary"
-                  href={step.href}
-                  className="w-full mt-auto"
-                >
-                  Go to {step.title}
-                </Button>
-              </div>
-            </motion.div>
-          ))}
+          <Button
+            as={Link}
+            href="/process-flow"
+            color="primary"
+            size="lg"
+            className="px-8 py-4 text-lg font-semibold"
+          >
+            Get Started
+          </Button>
         </motion.div>
       </section>
     </DefaultLayout>

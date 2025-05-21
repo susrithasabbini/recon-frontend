@@ -28,6 +28,7 @@ You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
 ```bash
 npm install
 ```
+
 ## Environment Variables
 
 Create a `.env` file in the root directory of the project with the following variables:

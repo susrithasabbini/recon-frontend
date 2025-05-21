@@ -15,7 +15,6 @@ import api from "@/config/axios";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { TrashIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
-import DefaultLayout from "@/layouts/default";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { Tooltip } from "@heroui/tooltip";
@@ -27,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@heroui/table";
+import { Pagination } from "@heroui/pagination";
 
 interface AccountDetails {
   account_id: string;
@@ -240,7 +240,7 @@ export default function RulesMappingPage() {
   const items = mappings.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   return (
-    <DefaultLayout>
+    <>
       {/* Hero Section */}
       <motion.section
         variants={fadeInUp}
@@ -254,9 +254,6 @@ export default function RulesMappingPage() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative mx-auto w-full max-w-4xl rounded-3xl px-2 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 flex flex-col items-center gap-2 text-center"
         >
-          <span className="inline-flex items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40 p-2 shadow">
-            <ArrowsRightLeftIcon className="h-8 w-8 text-blue-600 dark:text-blue-300" />
-          </span>
           <motion.h1
             variants={fadeInUp}
             custom={1}
@@ -449,43 +446,19 @@ export default function RulesMappingPage() {
                         selectionMode="none"
                         classNames={{
                           wrapper: "min-w-full",
+                          th: "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium sticky top-0 z-10",
                         }}
                         bottomContent={
-                          <div className="flex w-full justify-center gap-2 py-4">
-                            <Button
-                              size="sm"
-                              variant="flat"
-                              onPress={() => setPage((p) => Math.max(p - 1, 1))}
-                              isDisabled={page === 1}
-                              className="min-w-[100px]"
-                            >
-                              Previous
-                            </Button>
-                            {Array.from({ length: pages }, (_, i) => i + 1).map(
-                              (p) => (
-                                <Button
-                                  key={p}
-                                  size="sm"
-                                  variant={p === page ? "flat" : "light"}
-                                  className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
-                                  onPress={() => setPage(p)}
-                                >
-                                  {p}
-                                </Button>
-                              ),
-                            )}
-                            <Button
-                              size="sm"
-                              variant="flat"
-                              onPress={() =>
-                                setPage((p) => Math.min(p + 1, pages))
-                              }
-                              isDisabled={page === pages}
-                              className="min-w-[100px]"
-                            >
-                              Next
-                            </Button>
-                          </div>
+                          pages > 1 ? (
+                            <div className="flex w-full justify-center gap-2 py-4">
+                              <Pagination
+                                total={pages}
+                                initialPage={page}
+                                onChange={(newPage) => setPage(newPage)}
+                                showControls
+                              />
+                            </div>
+                          ) : null
                         }
                       >
                         <TableHeader>
@@ -496,24 +469,26 @@ export default function RulesMappingPage() {
                         <TableBody items={items} emptyContent={<></>}>
                           {(m) => (
                             <TableRow key={m.id}>
-                              <TableCell className="whitespace-nowrap text-primary font-medium">
+                              <TableCell className="whitespace-nowrap text-primary font-medium py-0.5">
                                 {m.accountOne.account_name}
                               </TableCell>
-                              <TableCell className="whitespace-nowrap text-secondary font-medium">
+                              <TableCell className="whitespace-nowrap text-secondary font-medium py-0.5">
                                 {m.accountTwo.account_name}
                               </TableCell>
-                              <TableCell className="whitespace-nowrap text-center">
+                              <TableCell className="whitespace-nowrap text-center py-0.5">
                                 <div className="flex gap-2 justify-center">
                                   <Tooltip content="Delete" placement="top">
                                     <Button
                                       isIconOnly
                                       variant="light"
                                       color="danger"
+                                      size="sm" // Added size="sm"
                                       onPress={() => handleDelete(m)}
                                       aria-label="Delete"
                                       data-testid="delete-button"
                                     >
-                                      <TrashIcon className="w-5 h-5" />
+                                      <TrashIcon className="w-4 h-4" />{" "}
+                                      {/* Changed w-5 h-5 to w-4 h-4 */}
                                     </Button>
                                   </Tooltip>
                                 </div>
@@ -567,6 +542,6 @@ export default function RulesMappingPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </DefaultLayout>
+    </>
   );
 }
