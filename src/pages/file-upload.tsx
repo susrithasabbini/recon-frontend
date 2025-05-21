@@ -12,7 +12,7 @@ import {
 } from "@heroui/table";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pagination } from "@heroui/pagination";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
@@ -584,7 +584,7 @@ export default function FileUploadPage() {
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
                     >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       Please select an account
@@ -771,7 +771,7 @@ export default function FileUploadPage() {
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
                     >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       Please select an account
