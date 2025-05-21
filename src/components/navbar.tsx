@@ -9,7 +9,7 @@ import {
 import MerchantSelect from "./merchant-select";
 
 import { ThemeSwitch } from "@/components/theme-switch";
-import { Logo } from "@/components/icons";
+import { ReconciliationLogo } from "@/components/icons";
 
 export const Navbar = () => {
   const location = useLocation();
@@ -24,8 +24,8 @@ export const Navbar = () => {
             color="foreground"
             href="/"
           >
-            <Logo />
-            <p className="font-bold text-inherit">Recon</p>
+            <ReconciliationLogo />
+            <p className="font-bold text-inherit">Hyperswitch Recon</p>
           </Link>
         </NavbarBrand>
       </NavbarContent>

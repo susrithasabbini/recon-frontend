@@ -17,6 +17,7 @@ import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
 import api from "@/config/axios";
+import { ReconciliationLogo } from "@/components/icons";
 
 interface Account {
   account_id: string;
@@ -156,7 +157,7 @@ export default function FileUploadPage() {
 
       try {
         const { data } = await api.get<StagingEntry[]>(
-          `/accounts/${selectedAccount}/staging-entries`,
+          `/accounts/${selectedAccount}/staging-entries`
         );
         setStagingEntries(data);
       } catch (error) {
@@ -187,7 +188,7 @@ export default function FileUploadPage() {
 
       try {
         const { data } = await api.get<AccountEntry[]>(
-          `/accounts/${selectedAccount}/entries`,
+          `/accounts/${selectedAccount}/entries`
         );
         setAccountEntries(data);
       } catch (error) {
@@ -246,7 +247,7 @@ export default function FileUploadPage() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        },
+        }
       );
 
       setFilename(file.name);
@@ -290,21 +291,21 @@ export default function FileUploadPage() {
   // Calculate pagination for staging entries
   const stagingPages = Math.max(
     1,
-    Math.ceil(stagingEntries.length / rowsPerPage),
+    Math.ceil(stagingEntries.length / rowsPerPage)
   );
   const stagingItems = stagingEntries.slice(
     (stagingPage - 1) * rowsPerPage,
-    stagingPage * rowsPerPage,
+    stagingPage * rowsPerPage
   );
 
   // Calculate pagination for account entries
   const entriesPages = Math.max(
     1,
-    Math.ceil(accountEntries.length / rowsPerPage),
+    Math.ceil(accountEntries.length / rowsPerPage)
   );
   const entriesItems = accountEntries.slice(
     (entriesPage - 1) * rowsPerPage,
-    entriesPage * rowsPerPage,
+    entriesPage * rowsPerPage
   );
 
   return (
@@ -327,7 +328,7 @@ export default function FileUploadPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
             )}
           >
             File Upload
@@ -556,16 +557,21 @@ export default function FileUploadPage() {
                       }
                     >
                       <TableHeader>
+                        <TableColumn>Order ID</TableColumn>
                         <TableColumn>Entry Type</TableColumn>
                         <TableColumn>Amount</TableColumn>
                         <TableColumn>Currency</TableColumn>
                         <TableColumn>Status</TableColumn>
                         <TableColumn>Effective Date</TableColumn>
                         <TableColumn>Created At</TableColumn>
+                        <TableColumn>Discarded At</TableColumn>
                       </TableHeader>
                       <TableBody items={stagingItems} emptyContent={<></>}>
                         {(entry) => (
                           <TableRow key={entry.staging_entry_id}>
+                            <TableCell className="font-mono text-sm">
+                              {entry.metadata?.order_id || "-"}
+                            </TableCell>
                             <TableCell>{entry.entry_type}</TableCell>
                             <TableCell>{entry.amount}</TableCell>
                             <TableCell>{entry.currency}</TableCell>
@@ -587,6 +593,11 @@ export default function FileUploadPage() {
                             </TableCell>
                             <TableCell>
                               {new Date(entry.created_at).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {entry.discarded_at
+                                ? new Date(entry.discarded_at).toLocaleString()
+                                : "-"}
                             </TableCell>
                           </TableRow>
                         )}
@@ -703,17 +714,21 @@ export default function FileUploadPage() {
                       }
                     >
                       <TableHeader>
+                        <TableColumn>Order ID</TableColumn>
                         <TableColumn>Entry Type</TableColumn>
                         <TableColumn>Amount</TableColumn>
                         <TableColumn>Currency</TableColumn>
                         <TableColumn>Status</TableColumn>
-                        <TableColumn>Transaction ID</TableColumn>
                         <TableColumn>Effective Date</TableColumn>
                         <TableColumn>Created At</TableColumn>
+                        <TableColumn>Discarded At</TableColumn>
                       </TableHeader>
                       <TableBody items={entriesItems} emptyContent={<></>}>
                         {(entry) => (
                           <TableRow key={entry.entry_id}>
+                            <TableCell className="font-mono text-sm">
+                              {entry.metadata?.order_id || "-"}
+                            </TableCell>
                             <TableCell>{entry.entry_type}</TableCell>
                             <TableCell>{entry.amount}</TableCell>
                             <TableCell>{entry.currency}</TableCell>
@@ -732,14 +747,16 @@ export default function FileUploadPage() {
                                 {entry.status}
                               </span>
                             </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {entry.transaction_id}
-                            </TableCell>
                             <TableCell>
                               {new Date(entry.effective_date).toLocaleString()}
                             </TableCell>
                             <TableCell>
                               {new Date(entry.created_at).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {entry.discarded_at
+                                ? new Date(entry.discarded_at).toLocaleString()
+                                : "-"}
                             </TableCell>
                           </TableRow>
                         )}
@@ -752,6 +769,7 @@ export default function FileUploadPage() {
           </main>
         </div>
       </motion.section>
+      <ReconciliationLogo size={36} className="text-primary" />
     </>
   );
 }
