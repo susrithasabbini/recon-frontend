@@ -5,6 +5,7 @@ import FileUploadPage from "./file-upload";
 import RulesMappingPage from "./rules-mapping";
 import DefaultLayout from "@/layouts/default";
 import MerchantManagementPage from "./merchant-creation";
+import NavigationButtons from "@/components/NavigationButtons";
 
 const pageSteps = [
   { title: "Merchant Creation" },
@@ -39,6 +40,11 @@ const MainProcessFlowPage: React.FC = () => {
         <div className="w-full">
           <CurrentStepComponent />
         </div>
+        <NavigationButtons
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          totalPages={pageSteps.length}
+        />
       </div>
     </DefaultLayout>
   );
