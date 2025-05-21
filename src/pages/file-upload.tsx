@@ -347,14 +347,34 @@ export default function FileUploadPage() {
     let sortedEntries = [...filteredStagingEntries];
     if (stagingSortDescriptor.column) {
       sortedEntries.sort((a, b) => {
-        const first = a[stagingSortDescriptor.column as keyof StagingEntry] as string;
-        const second = b[stagingSortDescriptor.column as keyof StagingEntry] as string;
-        let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
+        const key = stagingSortDescriptor.column as keyof StagingEntry;
+        const valA = a[key];
+        const valB = b[key];
+
+        let cmpResult = 0;
+
+        if (valA == null && valB == null) cmpResult = 0;
+        else if (valA == null) cmpResult = -1; // nulls first
+        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (key === "created_at" || key === "effective_date") {
+          const dateA = new Date(valA as string).getTime();
+          const dateB = new Date(valB as string).getTime();
+          cmpResult = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+        } else {
+          const numA = parseFloat(valA as string);
+          const numB = parseFloat(valB as string);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            cmpResult = numA < numB ? -1 : numA > numB ? 1 : 0;
+          } else {
+            // Fallback to string comparison
+            cmpResult = (valA as string).localeCompare(valB as string);
+          }
+        }
 
         if (stagingSortDescriptor.direction === "descending") {
-          cmp *= -1;
+          cmpResult *= -1;
         }
-        return cmp;
+        return cmpResult;
       });
     }
     const items = sortedEntries.slice(
@@ -383,14 +403,30 @@ export default function FileUploadPage() {
     let sortedEntries = [...filteredAccountEntries];
     if (entriesSortDescriptor.column) {
       sortedEntries.sort((a, b) => {
-        const first = a[entriesSortDescriptor.column as keyof AccountEntry] as any;
-        const second = b[entriesSortDescriptor.column as keyof AccountEntry] as any;
-        let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
+        const key = entriesSortDescriptor.column as keyof AccountEntry;
+        const valA = a[key];
+        const valB = b[key];
+        
+        let cmpResult = 0;
+
+        if (valA == null && valB == null) cmpResult = 0;
+        else if (valA == null) cmpResult = -1; // nulls first
+        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (key === "created_at" || key === "effective_date") {
+          const dateA = new Date(valA as string).getTime();
+          const dateB = new Date(valB as string).getTime();
+          cmpResult = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+        } else if (key === "amount") {
+          cmpResult = (valA as number) < (valB as number) ? -1 : (valA as number) > (valB as number) ? 1 : 0;
+        } else {
+          // Fallback to string comparison for other properties if any
+           cmpResult = String(valA).localeCompare(String(valB));
+        }
 
         if (entriesSortDescriptor.direction === "descending") {
-          cmp *= -1;
+          cmpResult *= -1;
         }
-        return cmp;
+        return cmpResult;
       });
     }
     const items = sortedEntries.slice(
