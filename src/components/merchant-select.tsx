@@ -69,7 +69,7 @@ export default function MerchantSelect({ className }: MerchantSelectProps) {
           </SelectItem>
         ))}
       </Select>
-      <Button
+      {/* <Button
         isIconOnly
         color="primary"
         variant="flat"
@@ -78,7 +78,7 @@ export default function MerchantSelect({ className }: MerchantSelectProps) {
         isDisabled={isLoading}
       >
         <PlusIcon className="h-5 w-5" />
-      </Button>
+      </Button> */}
 
       <Modal
         isOpen={isModalOpen}

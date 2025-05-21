@@ -39,7 +39,8 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
       <Button
         onClick={handleNext}
         isDisabled={currentStep === totalPages - 1}
-        variant="flat"
+        color="primary" // Changed to primary color
+        variant="solid" // Assuming solid variant for a primary button, adjust if needed
         className="flex items-center gap-2"
       >
         Next
