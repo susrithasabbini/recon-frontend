@@ -17,7 +17,6 @@ import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
 import api from "@/config/axios";
-import { ReconciliationLogo } from "@/components/icons";
 
 interface Account {
   account_id: string;
@@ -769,7 +768,6 @@ export default function FileUploadPage() {
           </main>
         </div>
       </motion.section>
-      <ReconciliationLogo size={36} className="text-primary" />
     </>
   );
 }
