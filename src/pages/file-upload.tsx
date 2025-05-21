@@ -636,13 +636,13 @@ export default function FileUploadPage() {
                       <TableBody items={stagingItems}>
                         {(entry) => (
                           <TableRow key={entry.staging_entry_id}>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-sm align-middle">
                               {entry.metadata?.order_id || "-"}
                             </TableCell>
-                            <TableCell>{entry.entry_type}</TableCell>
-                            <TableCell className="text-right">{entry.amount}</TableCell>
-                            <TableCell>{entry.currency}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
+                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
+                            <TableCell className="align-middle">{entry.currency}</TableCell>
+                            <TableCell className="text-center align-middle">
                               <span
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                   entry.status === "PROCESSED"
@@ -657,10 +657,10 @@ export default function FileUploadPage() {
                                 {entry.status}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.effective_date).toLocaleString()}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.created_at).toLocaleString()}
                             </TableCell>
                           </TableRow>
@@ -824,13 +824,13 @@ export default function FileUploadPage() {
                       <TableBody items={entriesItems}>
                         {(entry) => (
                           <TableRow key={entry.entry_id}>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-sm align-middle">
                               {entry.metadata?.order_id || "-"}
                             </TableCell>
-                            <TableCell>{entry.entry_type}</TableCell>
-                            <TableCell className="text-right">{entry.amount}</TableCell>
-                            <TableCell>{entry.currency}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
+                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
+                            <TableCell className="align-middle">{entry.currency}</TableCell>
+                            <TableCell className="text-center align-middle">
                               <span
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                   entry.status === "POSTED"
@@ -845,7 +845,7 @@ export default function FileUploadPage() {
                                 {entry.status}
                               </span>
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center align-middle">
                               {entry.transaction?.status ? (
                                 <span
                                   className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
@@ -866,10 +866,10 @@ export default function FileUploadPage() {
                                 "-" 
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.effective_date).toLocaleString()}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.created_at).toLocaleString()}
                             </TableCell>
                           </TableRow>
