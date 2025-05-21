@@ -525,7 +525,7 @@ export default function FileUploadPage() {
               </Select>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[calc(35rem)]"> {/* Added min-height */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem]"> {/* Adjusted min-height */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
@@ -712,7 +712,7 @@ export default function FileUploadPage() {
                 </div>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[calc(35rem)]"> {/* Added min-height */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem]"> {/* Adjusted min-height */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
