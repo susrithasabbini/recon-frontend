@@ -552,7 +552,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -576,7 +576,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
                     data-testid="empty-state"
                   >
                     <motion.div
