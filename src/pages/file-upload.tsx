@@ -525,7 +525,7 @@ export default function FileUploadPage() {
               </Select>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem]"> {/* Adjusted min-height */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full"> {/* Removed min-height from Card */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
@@ -533,7 +533,7 @@ export default function FileUploadPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
                     data-testid="loading-skeleton"
                   >
                     {[...Array(3)].map((_, i) => (
@@ -552,7 +552,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -576,7 +576,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -600,7 +600,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="min-h-[480px]" // Re-add min-height
+                    className="min-h-[33rem]" // Adjusted min-height to match empty states
                   >
                     <Table
                       aria-label="Staging Entries"
@@ -712,7 +712,7 @@ export default function FileUploadPage() {
                 </div>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem]"> {/* Adjusted min-height */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6"> {/* Removed min-height from Card */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
@@ -720,7 +720,7 @@ export default function FileUploadPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
                     data-testid="loading-skeleton"
                   >
                     {[...Array(3)].map((_, i) => (
@@ -739,7 +739,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -763,7 +763,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -787,7 +787,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="min-h-[480px]" // Re-add min-height
+                    className="min-h-[33rem]" // Adjusted min-height to match empty states
                   >
                     <Table
                       aria-label="Account Entries"
