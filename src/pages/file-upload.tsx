@@ -525,7 +525,7 @@ export default function FileUploadPage() {
               </Select>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[calc(35rem)]"> {/* Added min-height */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
@@ -552,7 +552,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -576,7 +576,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -712,7 +712,7 @@ export default function FileUploadPage() {
                 </div>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6">
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[calc(35rem)]"> {/* Added min-height */}
               <AnimatePresence mode="wait">
                 {loading && selectedMerchant ? (
                   <motion.div
@@ -739,7 +739,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -763,7 +763,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 py-14 text-center min-h-[480px]"
+                    className="flex flex-col items-center justify-center gap-3 py-14 text-center h-full" 
                     data-testid="empty-state"
                   >
                     <motion.div
