@@ -1,12 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
-import { Select, SelectItem } from "@heroui/select";
 import { Card, CardBody, CardHeader, CardFooter } from "@heroui/card";
 import {
-  BanknotesIcon,
+  BuildingOfficeIcon,
   MagnifyingGlassIcon,
-  TrashIcon,
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import {
@@ -32,15 +30,12 @@ import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { useDefaultContext } from "@/contexts/default-context";
 
-interface Account {
-  account_id: string;
+interface Merchant {
   merchant_id: string;
-  account_name: string;
-  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
-  currency: string;
-  posted_balance: string;
-  pending_balance: string;
-  available_balance: string;
+  merchant_name: string;
+  merchant_code: string;
+  status: "ACTIVE" | "INACTIVE";
+  created_at: string;
 }
 
 /**
@@ -68,43 +63,31 @@ const scaleIn = {
   },
 };
 
-export default function AccountManagementPage() {
-  const {
-    selectedMerchant,
-    createAccount,
-    getAccounts,
-    deleteAccount,
-    updateAccount, // Assuming updateAccount exists in the context
-  } = useDefaultContext();
-  const [accounts, setAccounts] = useState<Account[]>([]);
+export default function MerchantManagementPage() {
+  const { merchants, addMerchant, isLoading, updateMerchant } =
+    useDefaultContext();
   const [name, setName] = useState("");
-  const [type, setType] = useState<"DEBIT_NORMAL" | "CREDIT_NORMAL">(
-    "DEBIT_NORMAL",
-  );
-  const [currency, setCurrency] = useState("USD");
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
-  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
-  const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
+  const [merchantToEdit, setMerchantToEdit] = useState<Merchant | null>(null);
   const [editName, setEditName] = useState("");
   const [error, setError] = useState("");
-
   const [loading, setLoading] = useState(false);
   const rowsPerPage = 5;
 
   /**
    * Derived state
    */
-  const filteredAccounts = useMemo(
+  const filteredMerchants = useMemo(
     () =>
-      accounts.filter((acc) =>
-        acc.account_name.toLowerCase().includes(query.toLowerCase()),
+      merchants.filter((merch) =>
+        merch.merchant_name.toLowerCase().includes(query.toLowerCase()),
       ),
-    [accounts, query],
+    [merchants, query],
   );
 
-  const pages = Math.max(1, Math.ceil(filteredAccounts.length / rowsPerPage));
-  const items = filteredAccounts.slice(
+  const pages = Math.max(1, Math.ceil(filteredMerchants.length / rowsPerPage));
+  const items = filteredMerchants.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage,
   );
@@ -112,67 +95,27 @@ export default function AccountManagementPage() {
   /**
    * Handlers
    */
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      if (!selectedMerchant) return;
-
-      setLoading(true);
-      try {
-        const data = await getAccounts();
-        setAccounts(data);
-      } catch (error) {
-        addToast({
-          title: "Failed to fetch accounts",
-          variant: "flat",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAccounts();
-  }, [selectedMerchant, getAccounts]);
-
-  async function handleAddAccount(e: React.FormEvent) {
+  async function handleAddMerchant(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Account name is required");
-      return;
-    }
-
-    if (!selectedMerchant) {
-      addToast({
-        title: "Please select a merchant first",
-        variant: "flat",
-      });
+      setError("Merchant name is required");
       return;
     }
 
     setLoading(true);
     try {
-      await createAccount({
-        account_name: name.trim(),
-        account_type: type,
-        currency,
-      });
-
-      // Fetch updated accounts after successful creation
-      const updatedAccounts = await getAccounts();
-      setAccounts(updatedAccounts);
-
+      await addMerchant(name.trim());
       // Reset form
       setName("");
-      setType("DEBIT_NORMAL");
-      setCurrency("USD");
       setPage(1);
       setError("");
 
       addToast({
-        title: "Account created successfully",
+        title: "Merchant created successfully",
       });
     } catch (error) {
       addToast({
-        title: "Failed to create account",
+        title: "Failed to create merchant",
         variant: "flat",
       });
     } finally {
@@ -180,48 +123,17 @@ export default function AccountManagementPage() {
     }
   }
 
-  function handleDeleteAccount(account: Account) {
-    setAccountToDelete(account);
-  }
-
-  async function confirmDelete() {
-    if (!accountToDelete) return;
-
-    setLoading(true);
-    try {
-      await deleteAccount(accountToDelete.account_id);
-
-      // Fetch updated accounts after successful deletion
-      const updatedAccounts = await getAccounts();
-      setAccounts(updatedAccounts);
-
-      setAccountToDelete(null);
-      if (items.length === 1 && page > 1) setPage(page - 1);
-
-      addToast({
-        title: "Account deleted successfully",
-      });
-    } catch (error) {
-      addToast({
-        title: "Failed to delete account",
-        variant: "flat",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleEditAccount(account: Account) {
-    setAccountToEdit(account);
-    setEditName(account.account_name);
+  function handleEditMerchant(merchant: Merchant) {
+    setMerchantToEdit(merchant);
+    setEditName(merchant.merchant_name);
   }
 
   async function confirmEdit(e: React.FormEvent) {
     e.preventDefault();
-    if (!editName.trim() || !accountToEdit || !selectedMerchant) {
+    if (!editName.trim() || !merchantToEdit) {
       addToast({
         title: "Error",
-        description: "Missing required information to update account.",
+        description: "Missing required information to update merchant.",
         variant: "flat",
       });
       return;
@@ -229,29 +141,17 @@ export default function AccountManagementPage() {
 
     setLoading(true);
     try {
-      await updateAccount(
-        selectedMerchant, // Corrected: selectedMerchant is the merchant_id string
-        accountToEdit.account_id,
-        {
-          account_name: editName.trim(),
-        },
-      );
-
-      // Update local state after successful API call
-      setAccounts((prev) =>
-        prev.map((acc) =>
-          acc.account_id === accountToEdit.account_id
-            ? { ...acc, account_name: editName.trim() } // Only update name as other fields are not editable
-            : acc,
-        ),
-      );
-      setAccountToEdit(null);
+      await updateMerchant(merchantToEdit.merchant_id, {
+        merchant_name: editName.trim(),
+        merchant_code: merchantToEdit.merchant_code,
+      });
+      setMerchantToEdit(null);
       addToast({
-        title: "Account updated successfully",
+        title: "Merchant updated successfully",
       });
     } catch (error) {
       addToast({
-        title: "Failed to update account",
+        title: "Failed to update merchant",
         description:
           error instanceof Error ? error.message : "An unknown error occurred.",
         variant: "flat",
@@ -284,15 +184,15 @@ export default function AccountManagementPage() {
               "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
-            Account Management
+            Merchant Management
           </motion.h1>
           <motion.p
             variants={fadeInUp}
             custom={2}
             className="text-gray-700 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-full sm:max-w-2xl mx-auto font-medium"
           >
-            Easily create, view, and manage your reconciliation accounts. Keep
-            your financial records organized and up to date.
+            Create and manage your merchants. Set up new merchants and configure
+            their settings.
           </motion.p>
         </motion.div>
 
@@ -304,22 +204,22 @@ export default function AccountManagementPage() {
               <Card className="shadow-xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 w-full">
                 <CardHeader className="flex items-center gap-2 p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-primary/5 dark:bg-primary/10 rounded-t-xl">
                   <div className="p-2 bg-primary/20 rounded-lg">
-                    <BanknotesIcon className="h-6 w-6 text-primary" />
+                    <BuildingOfficeIcon className="h-6 w-6 text-primary" />
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold">
-                    New Account
+                    New Merchant
                   </h2>
                 </CardHeader>
                 <CardBody className="p-4 sm:p-6">
                   <form
-                    onSubmit={handleAddAccount}
+                    onSubmit={handleAddMerchant}
                     className="space-y-4 sm:space-y-6"
-                    aria-label="Add new account"
+                    aria-label="Add new merchant"
                   >
                     <div>
                       <Input
-                        aria-label="Account Name"
-                        placeholder="Enter account name"
+                        aria-label="Merchant Name"
+                        placeholder="Enter merchant name"
                         value={name}
                         onChange={(e) => {
                           setName(e.target.value);
@@ -330,65 +230,39 @@ export default function AccountManagementPage() {
                           inputWrapper: "h-10 sm:h-12",
                         }}
                         autoFocus
-                        data-testid="account-name-input"
+                        data-testid="merchant-name-input"
                       />
-                      {error && (
-                        <p
-                          className="text-red-500 text-sm mt-2"
-                          data-testid="error-message"
-                        >
-                          {error}
-                        </p>
-                      )}
                     </div>
-                    <Select
-                      aria-label="Account Type"
-                      selectedKeys={[type]}
-                      onChange={(e) =>
-                        setType(
-                          e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL",
-                        )
-                      }
-                      disallowEmptySelection
-                      className="w-full"
-                      data-testid="account-type-select"
-                    >
-                      <SelectItem key="DEBIT_NORMAL">Debit</SelectItem>
-                      <SelectItem key="CREDIT_NORMAL">Credit</SelectItem>
-                    </Select>
-                    <Select
-                      aria-label="Currency"
-                      selectedKeys={[currency]}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      disallowEmptySelection
-                      className="w-full"
-                      data-testid="currency-select"
-                    >
-                      <SelectItem key="USD">USD</SelectItem>
-                      <SelectItem key="EUR">EUR</SelectItem>
-                      <SelectItem key="GBP">GBP</SelectItem>
-                    </Select>
+
+                    {error && (
+                      <p
+                        className="text-red-500 text-sm mt-2"
+                        data-testid="error-message"
+                      >
+                        {error}
+                      </p>
+                    )}
                     <Button
                       type="submit"
                       color="primary"
                       className="w-full h-10 sm:h-12 text-base font-medium"
-                      isDisabled={!selectedMerchant}
-                      data-testid="add-account-button"
+                      data-testid="add-merchant-button"
+                      isLoading={loading}
                     >
-                      Add Account
+                      Add Merchant
                     </Button>
                   </form>
                 </CardBody>
-                {accounts.length > 0 && (
+                {merchants.length > 0 && (
                   <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
-                    Total accounts: {accounts.length}
+                    Total merchants: {merchants.length}
                   </CardFooter>
                 )}
               </Card>
             </motion.div>
           </aside>
 
-          {/* ACCOUNT LIST */}
+          {/* MERCHANT LIST */}
           <main className="lg:col-span-8 space-y-4 sm:space-y-6 w-full max-w-full">
             <motion.div
               variants={fadeInUp}
@@ -396,14 +270,14 @@ export default function AccountManagementPage() {
               className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"
             >
               <h2 className="text-lg sm:text-2xl font-semibold">
-                Account List
+                Merchant List
               </h2>
               <Input
                 aria-label="Search"
                 startContent={
                   <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
                 }
-                placeholder="Search accounts..."
+                placeholder="Search merchants..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full sm:max-w-xs"
@@ -414,7 +288,7 @@ export default function AccountManagementPage() {
 
             <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
               <AnimatePresence mode="wait">
-                {loading && selectedMerchant ? (
+                {isLoading ? (
                   <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
@@ -432,7 +306,7 @@ export default function AccountManagementPage() {
                       />
                     ))}
                   </motion.div>
-                ) : !selectedMerchant || accounts.length === 0 ? (
+                ) : merchants.length === 0 ? (
                   <motion.div
                     key="empty"
                     variants={scaleIn}
@@ -446,17 +320,13 @@ export default function AccountManagementPage() {
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
                     >
-                      <BanknotesIcon className="h-12 w-12 text-gray-400" />
+                      <BuildingOfficeIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      {!selectedMerchant
-                        ? "Please select a merchant first"
-                        : "No accounts found"}
+                      No merchants found
                     </p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      {!selectedMerchant
-                        ? "Select a merchant to view and manage accounts"
-                        : "Start by adding your first account using the form"}
+                      Start by adding your first merchant using the form
                     </p>
                   </motion.div>
                 ) : (
@@ -469,7 +339,7 @@ export default function AccountManagementPage() {
                   >
                     <div className="overflow-x-auto w-full">
                       <Table
-                        aria-label="Accounts table"
+                        aria-label="Merchants table"
                         isStriped
                         selectionMode="none"
                         classNames={{
@@ -488,40 +358,22 @@ export default function AccountManagementPage() {
                             </div>
                           ) : null
                         }
-                        data-testid="accounts-table"
+                        data-testid="merchants-table"
                       >
                         <TableHeader>
-                          <TableColumn align="start">Account Name</TableColumn>
-                          <TableColumn align="center">Account Type</TableColumn>
-                          <TableColumn align="center">Currency</TableColumn>
-                          <TableColumn align="end">
-                            Available Balance
-                          </TableColumn>
-                          <TableColumn align="center" width={140}>
+                          <TableColumn align="start">Merchant Name</TableColumn>
+                          <TableColumn align="center" width={100}>
                             Actions
                           </TableColumn>
                         </TableHeader>
                         <TableBody items={items} emptyContent={<></>}>
-                          {(acc: Account) => (
+                          {(merch: Merchant) => (
                             <TableRow
-                              key={acc.account_id}
+                              key={merch.merchant_id}
                               className="focus:outline-primary"
                             >
                               <TableCell className="font-medium py-0.5">
-                                {acc.account_name}
-                              </TableCell>
-                              <TableCell className="py-0.5">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium">
-                                  {acc.account_type === "DEBIT_NORMAL"
-                                    ? "Debit"
-                                    : "Credit"}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-center py-0.5">
-                                {acc.currency}
-                              </TableCell>
-                              <TableCell className="text-right font-medium py-0.5">
-                                {acc.available_balance}
+                                {merch.merchant_name}
                               </TableCell>
                               <TableCell className="py-0.5">
                                 <div className="flex gap-2 justify-center">
@@ -531,26 +383,12 @@ export default function AccountManagementPage() {
                                       variant="light"
                                       color="primary"
                                       size="sm"
-                                      onPress={() => handleEditAccount(acc)}
+                                      onPress={() => handleEditMerchant(merch)}
                                       className="text-primary-500 hover:text-primary-600 focus:outline focus:outline-2 focus:outline-primary"
-                                      aria-label={`Edit account ${acc.account_name}`}
+                                      aria-label={`Edit merchant ${merch.merchant_name}`}
                                       data-testid="edit-button"
                                     >
                                       <PencilSquareIcon className="h-4 w-4" />
-                                    </Button>
-                                  </Tooltip>
-                                  <Tooltip content="Delete" placement="top">
-                                    <Button
-                                      isIconOnly
-                                      variant="light"
-                                      color="danger"
-                                      size="sm"
-                                      onPress={() => handleDeleteAccount(acc)}
-                                      className="text-danger-500 hover:text-danger-600 focus:outline focus:outline-2 focus:outline-danger"
-                                      aria-label={`Delete account ${acc.account_name}`}
-                                      data-testid="delete-button"
-                                    >
-                                      <TrashIcon className="h-4 w-4" />
                                     </Button>
                                   </Tooltip>
                                 </div>
@@ -568,52 +406,19 @@ export default function AccountManagementPage() {
         </div>
       </motion.section>
 
-      {/* DELETE MODAL */}
-      <Modal
-        isOpen={accountToDelete !== null}
-        onClose={() => setAccountToDelete(null)}
-        size="sm"
-        aria-label="Delete account confirmation"
-      >
-        <ModalContent as={motion.div}>
-          <ModalHeader>Delete Account</ModalHeader>
-          <ModalBody>
-            <p>
-              Are you sure you want to delete{" "}
-              <span className="font-medium">
-                {accountToDelete?.account_name}
-              </span>
-              ? This action cannot be undone.
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={() => setAccountToDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              color="danger"
-              onPress={confirmDelete}
-              data-testid="confirm-delete-button"
-            >
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
       {/* EDIT MODAL */}
       <Modal
-        isOpen={accountToEdit !== null}
-        onClose={() => setAccountToEdit(null)}
+        isOpen={merchantToEdit !== null}
+        onClose={() => setMerchantToEdit(null)}
         size="sm"
-        aria-label="Edit account"
+        aria-label="Edit merchant"
       >
         <ModalContent as={motion.form} onSubmit={confirmEdit}>
-          <ModalHeader>Edit Account</ModalHeader>
+          <ModalHeader>Edit Merchant</ModalHeader>
           <ModalBody className="space-y-5">
             <Input
-              aria-label="Edit Account Name"
-              placeholder="Account Name"
+              aria-label="Edit Merchant Name"
+              placeholder="Merchant Name"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               required
@@ -624,8 +429,9 @@ export default function AccountManagementPage() {
           <ModalFooter>
             <Button
               variant="light"
-              onPress={() => setAccountToEdit(null)}
+              onPress={() => setMerchantToEdit(null)}
               type="button"
+              isDisabled={loading}
             >
               Cancel
             </Button>
@@ -633,6 +439,7 @@ export default function AccountManagementPage() {
               color="primary"
               type="submit"
               data-testid="save-edit-button"
+              isLoading={loading}
             >
               Save Changes
             </Button>

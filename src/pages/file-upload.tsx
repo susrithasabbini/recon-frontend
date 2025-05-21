@@ -1,8 +1,6 @@
-import DefaultLayout from "@/layouts/default";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectItem } from "@heroui/select";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
-import { Button } from "@heroui/button";
 import {
   Table,
   TableHeader,
@@ -12,20 +10,67 @@ import {
   TableCell,
 } from "@heroui/table";
 import { motion, AnimatePresence } from "framer-motion";
+import { Pagination } from "@heroui/pagination";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
-// Simple CSV parser (no external dependency)
-function parseCSV(text: string): string[][] {
-  return text
-    .trim()
-    .split(/\r?\n/)
-    .map((line) => {
-      // Basic CSV split (does not handle quoted commas)
-      return line.split(",").map((cell) => cell.trim());
-    });
+import api from "@/config/axios";
+
+interface Account {
+  account_id: string;
+  merchant_id: string;
+  account_name: string;
+  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
+  currency: string;
+  posted_balance: string;
+  pending_balance: string;
+  available_balance: string;
+}
+
+interface StagingEntry {
+  staging_entry_id: string;
+  account_id: string;
+  entry_type: "DEBIT" | "CREDIT";
+  amount: string;
+  currency: string;
+  status: string;
+  effective_date: string;
+  metadata: Record<string, any>;
+  discarded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  account: {
+    account_name: string;
+    merchant_id: string;
+  };
+}
+
+interface AccountEntry {
+  entry_id: string;
+  account_id: string;
+  transaction_id: string;
+  entry_type: "DEBIT" | "CREDIT";
+  amount: number;
+  currency: string;
+  status: "EXPECTED" | "POSTED" | "ARCHIVED";
+  effective_date: string;
+  metadata: Record<string, any>;
+  discarded_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UploadResponse {
+  message: string;
+  successful_ingestions: number;
+  failed_ingestions: number;
+  errors: {
+    row_number: number;
+    error_details: string;
+    row_data: Record<string, any>;
+  }[];
 }
 
 const fadeInUp = {
@@ -51,23 +96,123 @@ const scaleIn = {
 };
 
 export default function FileUploadPage() {
-  const { selectedMerchant } = useDefaultContext();
-  const [selectedType, setSelectedType] = useState("OMS");
-  const [omsData, setOmsData] = useState<string[][]>([]);
-  const [pspData, setPspData] = useState<string[][]>([]);
+  const { selectedMerchant, getAccounts } = useDefaultContext();
   const [loading, setLoading] = useState(false);
-  const [omsFilename, setOmsFilename] = useState<string | null>(null);
-  const [pspFilename, setPspFilename] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [filename, setFilename] = useState<string | null>(null);
+  const [stagingPage, setStagingPage] = useState(1);
+  const [entriesPage, setEntriesPage] = useState(1);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [stagingEntries, setStagingEntries] = useState<StagingEntry[]>([]);
+  const [accountEntries, setAccountEntries] = useState<AccountEntry[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<{
+    message: string;
+    successful: number;
+    failed: number;
+    errors: { row: number; details: string }[];
+  } | null>(null);
   const rowsPerPage = 5;
 
-  const handleFileUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "OMS" | "PSP",
-  ) => {
-    if (!selectedMerchant) {
+  // Reset state when merchant changes
+  useEffect(() => {
+    setSelectedAccount("");
+    setStagingEntries([]);
+    setAccountEntries([]);
+    setFilename(null);
+    setUploadStatus(null);
+  }, [selectedMerchant]);
+
+  // Fetch accounts when merchant is selected
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      if (!selectedMerchant) {
+        setAccounts([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const data = await getAccounts();
+        setAccounts(data);
+      } catch (error) {
+        addToast({
+          title: "Failed to fetch accounts",
+          variant: "flat",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, [selectedMerchant, getAccounts]);
+
+  // Poll staging entries every second when an account is selected
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchStagingEntries = async () => {
+      if (!selectedAccount || !selectedMerchant) return;
+
+      try {
+        const { data } = await api.get<StagingEntry[]>(
+          `/accounts/${selectedAccount}/staging-entries`,
+        );
+        setStagingEntries(data);
+      } catch (error) {
+        console.error("Error fetching staging entries:", error);
+      }
+    };
+
+    if (selectedAccount && selectedMerchant) {
+      // Initial fetch
+      fetchStagingEntries();
+      // Set up polling
+      intervalId = setInterval(fetchStagingEntries, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [selectedAccount, selectedMerchant]);
+
+  // Poll account entries every second when an account is selected
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchAccountEntries = async () => {
+      if (!selectedAccount || !selectedMerchant) return;
+
+      try {
+        const { data } = await api.get<AccountEntry[]>(
+          `/accounts/${selectedAccount}/entries`,
+        );
+        setAccountEntries(data);
+      } catch (error) {
+        console.error("Error fetching account entries:", error);
+      }
+    };
+
+    if (selectedAccount && selectedMerchant) {
+      // Initial fetch
+      fetchAccountEntries();
+      // Set up polling
+      intervalId = setInterval(fetchAccountEntries, 1000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [selectedAccount, selectedMerchant]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedAccount) {
       addToast({
-        title: "Please select a merchant first",
+        title: "Please select an account first",
         variant: "flat",
       });
       return;
@@ -75,40 +220,95 @@ export default function FileUploadPage() {
 
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check if file is CSV
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      addToast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "flat",
+      });
+      e.target.value = "";
+      return;
+    }
+
     setLoading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const parsed = parseCSV(text);
-      if (type === "OMS") {
-        setOmsData(parsed);
-        setOmsFilename(file.name);
+    setUploadStatus(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data } = await api.post<UploadResponse>(
+        `/accounts/${selectedAccount}/staging-entries/files`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      setFilename(file.name);
+      setUploadStatus({
+        message: data.message,
+        successful: data.successful_ingestions,
+        failed: data.failed_ingestions,
+        errors: data.errors.map((err) => ({
+          row: err.row_number,
+          details: err.error_details,
+        })),
+      });
+
+      if (data.failed_ingestions === 0) {
         addToast({
-          title: "OMS file uploaded successfully",
+          title: "File uploaded successfully",
+          description: `${data.successful_ingestions} entries processed`,
         });
       } else {
-        setPspData(parsed);
-        setPspFilename(file.name);
         addToast({
-          title: "PSP file uploaded successfully",
+          title: "File processed with some errors",
+          description: `${data.successful_ingestions} successful, ${data.failed_ingestions} failed`,
+          variant: "flat",
         });
       }
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.error || "Failed to upload file";
+      addToast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "flat",
+      });
+      setFilename(null);
+    } finally {
       setLoading(false);
       e.target.value = "";
-    };
-    reader.readAsText(file);
+    }
   };
 
-  const data = selectedType === "OMS" ? omsData : pspData;
-  const hasData = data.length > 1;
-  const pages = Math.max(1, Math.ceil((data.length - 1) / rowsPerPage));
-  const items = data.slice(
-    (page - 1) * rowsPerPage + 1,
-    page * rowsPerPage + 1,
+  // Calculate pagination for staging entries
+  const stagingPages = Math.max(
+    1,
+    Math.ceil(stagingEntries.length / rowsPerPage),
+  );
+  const stagingItems = stagingEntries.slice(
+    (stagingPage - 1) * rowsPerPage,
+    stagingPage * rowsPerPage,
+  );
+
+  // Calculate pagination for account entries
+  const entriesPages = Math.max(
+    1,
+    Math.ceil(accountEntries.length / rowsPerPage),
+  );
+  const entriesItems = accountEntries.slice(
+    (entriesPage - 1) * rowsPerPage,
+    entriesPage * rowsPerPage,
   );
 
   return (
-    <DefaultLayout>
+    <>
       {/* Hero Section */}
       <motion.section
         variants={fadeInUp}
@@ -122,9 +322,6 @@ export default function FileUploadPage() {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="relative mx-auto w-full max-w-4xl rounded-3xl px-2 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6 flex flex-col items-center gap-2 text-center"
         >
-          <span className="inline-flex items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40 p-2 shadow">
-            <ArrowUpTrayIcon className="h-8 w-8 text-blue-600 dark:text-blue-300" />
-          </span>
           <motion.h1
             variants={fadeInUp}
             custom={1}
@@ -140,7 +337,7 @@ export default function FileUploadPage() {
             custom={2}
             className="text-gray-700 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-full sm:max-w-2xl mx-auto font-medium"
           >
-            Upload OMS and PSP CSV files to start the reconciliation process.
+            Upload transaction files to start the reconciliation process.
           </motion.p>
         </motion.div>
 
@@ -155,79 +352,96 @@ export default function FileUploadPage() {
                     <ArrowUpTrayIcon className="h-6 w-6 text-primary" />
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold">
-                    Upload Files
+                    Upload Transactions
                   </h2>
                 </CardHeader>
                 <CardBody className="p-4 sm:p-6">
                   <form
                     className="space-y-4 sm:space-y-6"
-                    aria-label="Upload CSV files"
+                    aria-label="Upload transaction file"
                   >
                     <div className="flex flex-col gap-2">
-                      <label className="font-medium">OMS CSV</label>
-                      <div className="relative block w-full">
-                        <input
-                          type="file"
-                          accept=".csv"
-                          onChange={(e) => handleFileUpload(e, "OMS")}
-                          className="sr-only"
-                          disabled={loading || !selectedMerchant}
-                          id="oms-upload"
-                          data-testid="oms-file-input"
-                        />
-                        <label
-                          htmlFor="oms-upload"
-                          className={`
-                            block w-full cursor-pointer text-sm text-gray-500
-                            border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
-                            hover:file:bg-blue-100
-                            ${!selectedMerchant ? "opacity-50 cursor-not-allowed" : ""}
-                          `}
-                          data-testid="oms-file-name"
-                        >
-                          {omsFilename || "No file chosen"}
-                        </label>
-                      </div>
+                      <label className="font-medium">Select Account</label>
+                      <Select
+                        aria-label="Select Account"
+                        placeholder="Select an account"
+                        className="w-full"
+                        isDisabled={!selectedMerchant || loading}
+                        selectedKeys={[selectedAccount]}
+                        onSelectionChange={(keys) => {
+                          const selected = Array.from(keys)[0] as string;
+                          setSelectedAccount(selected);
+                        }}
+                        data-testid="account-select"
+                      >
+                        {accounts.map((account) => (
+                          <SelectItem key={account.account_id}>
+                            {account.account_name}
+                          </SelectItem>
+                        ))}
+                      </Select>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="font-medium">PSP CSV</label>
+                      <label className="font-medium">Transaction File</label>
                       <div className="relative block w-full">
                         <input
                           type="file"
                           accept=".csv"
-                          onChange={(e) => handleFileUpload(e, "PSP")}
+                          onChange={handleFileUpload}
                           className="sr-only"
-                          disabled={loading || !selectedMerchant}
-                          id="psp-upload"
-                          data-testid="psp-file-input"
+                          disabled={loading || !selectedAccount}
+                          id="transaction-upload"
+                          data-testid="transaction-file-input"
                         />
                         <label
-                          htmlFor="psp-upload"
+                          htmlFor="transaction-upload"
                           className={`
                             block w-full cursor-pointer text-sm text-gray-500
                             border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
                             hover:file:bg-blue-100
-                            ${!selectedMerchant ? "opacity-50 cursor-not-allowed" : ""}
+                            ${!selectedAccount ? "opacity-50 cursor-not-allowed" : ""}
                           `}
-                          data-testid="psp-file-name"
+                          data-testid="transaction-file-name"
                         >
-                          {pspFilename || "No file chosen"}
+                          {filename || "No file chosen"}
                         </label>
                       </div>
                     </div>
                   </form>
                 </CardBody>
-                {(omsData.length > 1 || pspData.length > 1) && (
+                {filename && (
                   <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <span data-testid="oms-row-count">
-                      OMS rows:{" "}
-                      {omsData.length - 1 > 0 ? omsData.length - 1 : 0}
-                    </span>{" "}
-                    |{" "}
-                    <span data-testid="psp-row-count">
-                      PSP rows:{" "}
-                      {pspData.length - 1 > 0 ? pspData.length - 1 : 0}
-                    </span>
+                    <div className="w-full space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span data-testid="file-name">File: {filename}</span>
+                        {uploadStatus && (
+                          <span
+                            className={`font-medium ${
+                              uploadStatus.failed === 0
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-yellow-600 dark:text-yellow-400"
+                            }`}
+                          >
+                            {uploadStatus.successful} successful,{" "}
+                            {uploadStatus.failed} failed
+                          </span>
+                        )}
+                      </div>
+                      {uploadStatus &&
+                        uploadStatus.errors &&
+                        uploadStatus.errors.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <p className="font-medium text-red-600 dark:text-red-400">
+                              Errors:
+                            </p>
+                            {uploadStatus.errors.map((error, index) => (
+                              <p key={index} className="text-xs">
+                                Row {error.row}: {error.details}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                    </div>
                   </CardFooter>
                 )}
               </Card>
@@ -242,21 +456,8 @@ export default function FileUploadPage() {
               className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"
             >
               <h2 className="text-lg sm:text-2xl font-semibold">
-                Uploaded Data
+                Processing Entries
               </h2>
-              <Select
-                label="View Data"
-                selectedKeys={[selectedType]}
-                onSelectionChange={(keys: any) =>
-                  setSelectedType(Array.from(keys)[0] as string)
-                }
-                className="w-40"
-                disallowEmptySelection
-                data-testid="data-type-select"
-              >
-                <SelectItem key="OMS">OMS</SelectItem>
-                <SelectItem key="PSP">PSP</SelectItem>
-              </Select>
             </motion.div>
             <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
               <AnimatePresence mode="wait">
@@ -278,7 +479,7 @@ export default function FileUploadPage() {
                       />
                     ))}
                   </motion.div>
-                ) : !selectedMerchant || !hasData ? (
+                ) : !selectedMerchant ? (
                   <motion.div
                     key="empty"
                     variants={scaleIn}
@@ -296,16 +497,34 @@ export default function FileUploadPage() {
                       <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      {!selectedMerchant
-                        ? "Please select a merchant first"
-                        : selectedType === "OMS"
-                          ? "No OMS file uploaded"
-                          : "No PSP file uploaded"}
+                      Please select a merchant first
                     </p>
                     <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      {!selectedMerchant
-                        ? "Select a merchant to upload files"
-                        : `Please upload a ${selectedType} CSV file using the form`}
+                      Select a merchant to view staging entries
+                    </p>
+                  </motion.div>
+                ) : !selectedAccount ? (
+                  <motion.div
+                    key="empty"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    data-testid="empty-state"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    >
+                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                    </motion.div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      Please select an account
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">
+                      Select an account to view staging entries
                     </p>
                   </motion.div>
                 ) : (
@@ -316,73 +535,216 @@ export default function FileUploadPage() {
                     animate="visible"
                     exit="hidden"
                   >
-                    <div className="overflow-x-auto w-full">
-                      <Table
-                        aria-label="Uploaded CSV Data"
-                        className="min-w-full"
-                        data-testid="data-table"
-                        bottomContent={
+                    <Table
+                      aria-label="Staging Entries"
+                      className="min-w-full"
+                      data-testid="staging-entries-table"
+                      bottomContent={
+                        stagingPages > 1 ? (
                           <div
                             className="flex w-full justify-center gap-2 py-4"
-                            data-testid="pagination"
+                            data-testid="staging-pagination"
                           >
-                            <Button
-                              size="sm"
-                              variant="flat"
-                              onPress={() => setPage((p) => Math.max(p - 1, 1))}
-                              isDisabled={page === 1}
-                              className="min-w-[100px]"
-                              data-testid="previous-page"
-                            >
-                              Previous
-                            </Button>
-                            {Array.from({ length: pages }, (_, i) => i + 1).map(
-                              (p) => (
-                                <Button
-                                  key={p}
-                                  size="sm"
-                                  variant={p === page ? "flat" : "light"}
-                                  className={`min-w-[40px] ${p === page ? "bg-primary text-primary-foreground" : ""}`}
-                                  onPress={() => setPage(p)}
-                                  data-testid={
-                                    p === page ? "current-page" : undefined
-                                  }
-                                >
-                                  {p}
-                                </Button>
-                              ),
-                            )}
-                            <Button
-                              size="sm"
-                              variant="flat"
-                              onPress={() =>
-                                setPage((p) => Math.min(p + 1, pages))
-                              }
-                              isDisabled={page === pages}
-                              className="min-w-[100px]"
-                              data-testid="next-page"
-                            >
-                              Next
-                            </Button>
+                            <Pagination
+                              total={stagingPages}
+                              initialPage={stagingPage}
+                              onChange={(newPage) => setStagingPage(newPage)}
+                              showControls
+                            />
                           </div>
-                        }
-                      >
-                        <TableHeader>
-                          {data[0].map((header, idx) => (
-                            <TableColumn key={idx}>{header}</TableColumn>
-                          ))}
-                        </TableHeader>
-                        <TableBody items={items} emptyContent={<></>}>
-                          {(row) => (
-                            <TableRow key={row.join("-")}>
-                              {row.map((cell, cellIdx) => (
-                                <TableCell key={cellIdx}>{cell}</TableCell>
-                              ))}
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ) : null
+                      }
+                    >
+                      <TableHeader>
+                        <TableColumn>Entry Type</TableColumn>
+                        <TableColumn>Amount</TableColumn>
+                        <TableColumn>Currency</TableColumn>
+                        <TableColumn>Status</TableColumn>
+                        <TableColumn>Effective Date</TableColumn>
+                        <TableColumn>Created At</TableColumn>
+                      </TableHeader>
+                      <TableBody items={stagingItems} emptyContent={<></>}>
+                        {(entry) => (
+                          <TableRow key={entry.staging_entry_id}>
+                            <TableCell>{entry.entry_type}</TableCell>
+                            <TableCell>{entry.amount}</TableCell>
+                            <TableCell>{entry.currency}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                  entry.status === "PROCESSED"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                    : entry.status === "NEEDS_MANUAL_REVIEW"
+                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                }`}
+                              >
+                                {entry.status}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.effective_date).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.created_at).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+            {/* Account Entries Table */}
+            <motion.div
+              variants={fadeInUp}
+              custom={1}
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"
+            >
+              <h2 className="text-lg sm:text-2xl font-semibold">
+                Processed Entries
+              </h2>
+            </motion.div>
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6">
+              <AnimatePresence mode="wait">
+                {loading && selectedMerchant ? (
+                  <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    data-testid="loading-skeleton"
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : !selectedMerchant ? (
+                  <motion.div
+                    key="empty"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    data-testid="empty-state"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    >
+                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                    </motion.div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      Please select a merchant first
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">
+                      Select a merchant to view account entries
+                    </p>
+                  </motion.div>
+                ) : !selectedAccount ? (
+                  <motion.div
+                    key="empty"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    data-testid="empty-state"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                    >
+                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                    </motion.div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      Please select an account
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">
+                      Select an account to view account entries
+                    </p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="table"
+                    variants={scaleIn}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    <Table
+                      aria-label="Account Entries"
+                      className="min-w-full"
+                      data-testid="account-entries-table"
+                      bottomContent={
+                        entriesPages > 1 ? (
+                          <div
+                            className="flex w-full justify-center gap-2 py-4"
+                            data-testid="entries-pagination"
+                          >
+                            <Pagination
+                              total={entriesPages}
+                              initialPage={entriesPage}
+                              onChange={(newPage) => setEntriesPage(newPage)}
+                              showControls
+                            />
+                          </div>
+                        ) : null
+                      }
+                    >
+                      <TableHeader>
+                        <TableColumn>Entry Type</TableColumn>
+                        <TableColumn>Amount</TableColumn>
+                        <TableColumn>Currency</TableColumn>
+                        <TableColumn>Status</TableColumn>
+                        <TableColumn>Transaction ID</TableColumn>
+                        <TableColumn>Effective Date</TableColumn>
+                        <TableColumn>Created At</TableColumn>
+                      </TableHeader>
+                      <TableBody items={entriesItems} emptyContent={<></>}>
+                        {(entry) => (
+                          <TableRow key={entry.entry_id}>
+                            <TableCell>{entry.entry_type}</TableCell>
+                            <TableCell>{entry.amount}</TableCell>
+                            <TableCell>{entry.currency}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                  entry.status === "POSTED"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                    : entry.status === "EXPECTED"
+                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                      : entry.status === "ARCHIVED"
+                                        ? "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                }`}
+                              >
+                                {entry.status}
+                              </span>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {entry.transaction_id}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.effective_date).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(entry.created_at).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -390,6 +752,6 @@ export default function FileUploadPage() {
           </main>
         </div>
       </motion.section>
-    </DefaultLayout>
+    </>
   );
 }
