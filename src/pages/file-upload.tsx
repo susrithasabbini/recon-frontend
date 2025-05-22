@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react"; 
 import { Select, SelectItem } from "@heroui/select";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import {
@@ -8,15 +8,17 @@ import {
   TableColumn,
   TableRow,
   TableCell,
+  SortDescriptor,
 } from "@heroui/table";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pagination } from "@heroui/pagination";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
 import api from "@/config/axios";
+import FileUploadForm from "@/components/FileUploadForm";
 
 interface Account {
   account_id: string;
@@ -54,12 +56,18 @@ interface AccountEntry {
   entry_type: "DEBIT" | "CREDIT";
   amount: number;
   currency: string;
-  status: "EXPECTED" | "POSTED" | "ARCHIVED";
+  status: "EXPECTED" | "POSTED" | "ARCHIVED"; // This might be the entry's own status, distinct from transaction status
   effective_date: string;
   metadata: Record<string, any>;
   discarded_at: string | null;
   created_at: string;
   updated_at: string;
+  transaction?: { // Made optional as it might not always be present, or use a specific type if always present
+    transaction_id: string;
+    status: "EXPECTED" | "POSTED" | "MISMATCH" | "ARCHIVED";
+    logical_transaction_id?: string; // Optional based on example
+    version?: number; // Optional based on example
+  };
 }
 
 interface UploadResponse {
@@ -100,9 +108,14 @@ export default function FileUploadPage() {
   const [loading, setLoading] = useState(false);
   const [filename, setFilename] = useState<string | null>(null);
   const [stagingPage, setStagingPage] = useState(1);
+  const [stagingStatusFilter, setStagingStatusFilter] = useState<string | "all">("all");
   const [entriesPage, setEntriesPage] = useState(1);
+  const [entriesStatusFilter, setEntriesStatusFilter] = useState<string | "all">("all");
+  const [entriesReconStatusFilter, setEntriesReconStatusFilter] = useState<string | "all">("all"); // New filter state
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [processingMode, setProcessingMode] = useState<string>("CONFIRMATION");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [stagingEntries, setStagingEntries] = useState<StagingEntry[]>([]);
   const [accountEntries, setAccountEntries] = useState<AccountEntry[]>([]);
   const [uploadStatus, setUploadStatus] = useState<{
@@ -111,13 +124,29 @@ export default function FileUploadPage() {
     failed: number;
     errors: { row: number; details: string }[];
   } | null>(null);
-  const rowsPerPage = 5;
+  const rowsPerPage = 10; // Changed to 10
+
+  const [stagingSortDescriptor, setStagingSortDescriptor] = useState<SortDescriptor>({
+    column: "created_at",
+    direction: "descending",
+  });
+  const [entriesSortDescriptor, setEntriesSortDescriptor] = useState<SortDescriptor>({
+    column: "created_at",
+    direction: "descending",
+  });
 
   // Reset state when merchant changes
   useEffect(() => {
     setSelectedAccount("");
+    setProcessingMode("CONFIRMATION");
+    setSelectedFile(null);
     setStagingEntries([]);
+    setStagingStatusFilter("all");
+    setStagingPage(1);
     setAccountEntries([]);
+    setEntriesStatusFilter("all");
+    setEntriesReconStatusFilter("all"); // Reset new filter
+    setEntriesPage(1);
     setFilename(null);
     setUploadStatus(null);
   }, [selectedMerchant]);
@@ -209,26 +238,40 @@ export default function FileUploadPage() {
     };
   }, [selectedAccount, selectedMerchant]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.toLowerCase().endsWith(".csv")) {
+        addToast({
+          title: "Invalid file type",
+          description: "Please upload a CSV file.",
+          variant: "flat",
+        });
+        setSelectedFile(null);
+        setFilename(null);
+        e.target.value = ""; 
+        return;
+      }
+      setSelectedFile(file);
+      setFilename(file.name);
+      setUploadStatus(null); 
+    } else {
+      setSelectedFile(null);
+      setFilename(null);
+    }
+  };
+
+  const handleActualFileUpload = async () => {
     if (!selectedAccount) {
-      addToast({
-        title: "Please select an account first",
-        variant: "flat",
-      });
+      addToast({ title: "Please select an account first.", variant: "flat" });
       return;
     }
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check if file is CSV
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      addToast({
-        title: "Invalid file type",
-        description: "Please upload a CSV file",
-        variant: "flat",
-      });
-      e.target.value = "";
+    if (!processingMode) {
+      addToast({ title: "Please select a processing mode.", variant: "flat" });
+      return;
+    }
+    if (!selectedFile) {
+      addToast({ title: "Please select a file to upload.", variant: "flat" });
       return;
     }
 
@@ -237,19 +280,17 @@ export default function FileUploadPage() {
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", selectedFile);
+      formData.append("processing_mode", processingMode); 
 
       const { data } = await api.post<UploadResponse>(
         `/accounts/${selectedAccount}/staging-entries/files`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
-      setFilename(file.name);
       setUploadStatus({
         message: data.message,
         successful: data.successful_ingestions,
@@ -263,49 +304,145 @@ export default function FileUploadPage() {
       if (data.failed_ingestions === 0) {
         addToast({
           title: "File uploaded successfully",
-          description: `${data.successful_ingestions} entries processed`,
+          description: `${data.successful_ingestions} entries processed.`,
         });
       } else {
         addToast({
           title: "File processed with some errors",
-          description: `${data.successful_ingestions} successful, ${data.failed_ingestions} failed`,
+          description: `${data.successful_ingestions} successful, ${data.failed_ingestions} failed.`,
           variant: "flat",
         });
       }
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.error || "Failed to upload file";
+        error.response?.data?.error || "Failed to upload file.";
       addToast({
         title: "Upload failed",
         description: errorMessage,
         variant: "flat",
       });
-      setFilename(null);
     } finally {
       setLoading(false);
-      e.target.value = "";
+      setSelectedFile(null);
+      setFilename(null); 
     }
   };
 
-  // Calculate pagination for staging entries
+  // Memoized filtered staging entries
+  const filteredStagingEntries = useMemo(() => {
+    let result;
+    if (stagingStatusFilter === "all") {
+      result = stagingEntries;
+    } else {
+      result = stagingEntries.filter(entry => entry.status === stagingStatusFilter);
+    }
+    return result;
+  }, [stagingEntries, stagingStatusFilter]);
+
   const stagingPages = Math.max(
     1,
-    Math.ceil(stagingEntries.length / rowsPerPage)
+    Math.ceil(filteredStagingEntries.length / rowsPerPage)
   );
-  const stagingItems = stagingEntries.slice(
-    (stagingPage - 1) * rowsPerPage,
-    stagingPage * rowsPerPage
-  );
+  const stagingItems = useMemo(() => {
+    let sortedEntries = [...filteredStagingEntries];
+    if (stagingSortDescriptor.column) {
+      sortedEntries.sort((a, b) => {
+        const key = stagingSortDescriptor.column as keyof StagingEntry;
+        const valA = a[key];
+        const valB = b[key];
 
-  // Calculate pagination for account entries
+        let cmpResult = 0;
+
+        if (valA == null && valB == null) cmpResult = 0;
+        else if (valA == null) cmpResult = -1; // nulls first
+        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (key === "created_at" || key === "effective_date") {
+          const dateA = new Date(valA as string).getTime();
+          const dateB = new Date(valB as string).getTime();
+          cmpResult = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+        } else {
+          const numA = parseFloat(valA as string);
+          const numB = parseFloat(valB as string);
+          if (!isNaN(numA) && !isNaN(numB)) {
+            cmpResult = numA < numB ? -1 : numA > numB ? 1 : 0;
+          } else {
+            // Fallback to string comparison
+            cmpResult = (valA as string).localeCompare(valB as string);
+          }
+        }
+
+        if (stagingSortDescriptor.direction === "descending") {
+          cmpResult *= -1;
+        }
+        return cmpResult;
+      });
+    }
+    const items = sortedEntries.slice(
+      (stagingPage - 1) * rowsPerPage,
+      stagingPage * rowsPerPage
+    );
+    return items;
+  }, [filteredStagingEntries, stagingPage, rowsPerPage, stagingSortDescriptor]);
+  
+  // Memoized filtered account entries
+  // Memoized filtered account entries
+  const filteredAccountEntries = useMemo(() => {
+    const result = accountEntries.filter(entry => {
+      const entryStatusMatch = entriesStatusFilter === "all" || entry.status === entriesStatusFilter;
+      const reconStatusMatch = entriesReconStatusFilter === "all" || entry.transaction?.status === entriesReconStatusFilter;
+      return entryStatusMatch && reconStatusMatch;
+    });
+    return result;
+  }, [accountEntries, entriesStatusFilter, entriesReconStatusFilter]);
+
   const entriesPages = Math.max(
     1,
-    Math.ceil(accountEntries.length / rowsPerPage)
+    Math.ceil(filteredAccountEntries.length / rowsPerPage)
   );
-  const entriesItems = accountEntries.slice(
-    (entriesPage - 1) * rowsPerPage,
-    entriesPage * rowsPerPage
-  );
+  const entriesItems = useMemo(() => {
+    let sortedEntries = [...filteredAccountEntries];
+    if (entriesSortDescriptor.column) {
+      sortedEntries.sort((a, b) => {
+        const key = entriesSortDescriptor.column as keyof AccountEntry;
+        const valA = a[key];
+        const valB = b[key];
+        
+        let cmpResult = 0;
+
+        if (valA == null && valB == null) cmpResult = 0;
+        else if (valA == null) cmpResult = -1; // nulls first
+        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (key === "created_at" || key === "effective_date") {
+          const dateA = new Date(valA as string).getTime();
+          const dateB = new Date(valB as string).getTime();
+          cmpResult = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+        } else if (key === "amount") {
+          cmpResult = (valA as number) < (valB as number) ? -1 : (valA as number) > (valB as number) ? 1 : 0;
+        } else {
+          // Fallback to string comparison for other properties if any
+           cmpResult = String(valA).localeCompare(String(valB));
+        }
+
+        if (entriesSortDescriptor.direction === "descending") {
+          cmpResult *= -1;
+        }
+        return cmpResult;
+      });
+    }
+    const items = sortedEntries.slice(
+      (entriesPage - 1) * rowsPerPage,
+      entriesPage * rowsPerPage
+    );
+    return items;
+  }, [filteredAccountEntries, entriesPage, rowsPerPage, entriesSortDescriptor]);
+
+  useEffect(() => {
+    setStagingPage(1);
+  }, [stagingStatusFilter]);
+
+  useEffect(() => {
+    setEntriesPage(1);
+  }, [entriesStatusFilter, entriesReconStatusFilter]); // Also reset on new filter change
 
   return (
     <>
@@ -349,20 +486,20 @@ export default function FileUploadPage() {
               <Card className="shadow-xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 w-full">
                 <CardHeader className="flex items-center gap-2 p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-primary/5 dark:bg-primary/10 rounded-t-xl">
                   <div className="p-2 bg-primary/20 rounded-lg">
-                    <ArrowUpTrayIcon className="h-6 w-6 text-primary" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold">
-                    Upload Transactions
+                    1. Select Account
                   </h2>
                 </CardHeader>
                 <CardBody className="p-4 sm:p-6">
-                  <form
-                    className="space-y-4 sm:space-y-6"
-                    aria-label="Upload transaction file"
-                  >
+                  <div className="space-y-4 sm:space-y-6">
                     <div className="flex flex-col gap-2">
-                      <label className="font-medium">Select Account</label>
+                      <label htmlFor="account-select-page" className="font-medium">Select Account</label>
                       <Select
+                        id="account-select-page"
                         aria-label="Select Account"
                         placeholder="Select an account"
                         className="w-full"
@@ -381,71 +518,21 @@ export default function FileUploadPage() {
                         ))}
                       </Select>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-medium">Transaction File</label>
-                      <div className="relative block w-full">
-                        <input
-                          type="file"
-                          accept=".csv"
-                          onChange={handleFileUpload}
-                          className="sr-only"
-                          disabled={loading || !selectedAccount}
-                          id="transaction-upload"
-                          data-testid="transaction-file-input"
-                        />
-                        <label
-                          htmlFor="transaction-upload"
-                          className={`
-                            block w-full cursor-pointer text-sm text-gray-500
-                            border border-gray-200 rounded px-4 py-2 bg-white dark:bg-gray-900
-                            hover:file:bg-blue-100
-                            ${!selectedAccount ? "opacity-50 cursor-not-allowed" : ""}
-                          `}
-                          data-testid="transaction-file-name"
-                        >
-                          {filename || "No file chosen"}
-                        </label>
-                      </div>
-                    </div>
-                  </form>
+                  </div>
                 </CardBody>
-                {filename && (
-                  <CardFooter className="text-xs sm:text-sm text-gray-400 dark:text-gray-600 px-4 sm:px-6 pb-4 sm:pb-6">
-                    <div className="w-full space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span data-testid="file-name">File: {filename}</span>
-                        {uploadStatus && (
-                          <span
-                            className={`font-medium ${
-                              uploadStatus.failed === 0
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-yellow-600 dark:text-yellow-400"
-                            }`}
-                          >
-                            {uploadStatus.successful} successful,{" "}
-                            {uploadStatus.failed} failed
-                          </span>
-                        )}
-                      </div>
-                      {uploadStatus &&
-                        uploadStatus.errors &&
-                        uploadStatus.errors.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            <p className="font-medium text-red-600 dark:text-red-400">
-                              Errors:
-                            </p>
-                            {uploadStatus.errors.map((error, index) => (
-                              <p key={index} className="text-xs">
-                                Row {error.row}: {error.details}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                  </CardFooter>
-                )}
               </Card>
             </motion.div>
+            <FileUploadForm
+              selectedAccount={selectedAccount}
+              loading={loading}
+              processingMode={processingMode}
+              setProcessingMode={setProcessingMode}
+              onFileChange={handleFileChange}
+              handleUploadClick={handleActualFileUpload}
+              filename={filename}
+              uploadStatus={uploadStatus}
+              isFileSelected={!!selectedFile}
+            />
           </aside>
 
           {/* DATA TABLE */}
@@ -458,16 +545,32 @@ export default function FileUploadPage() {
               <h2 className="text-lg sm:text-2xl font-semibold">
                 Processing Entries
               </h2>
+              {selectedAccount && (
+              <Select
+                aria-label="Filter Staging Entries by Status"
+                placeholder="Filter by Status"
+                selectedKeys={stagingStatusFilter === "all" ? [] : [stagingStatusFilter]}
+                onSelectionChange={(keys) => setStagingStatusFilter(Array.from(keys)[0] as string || "all")}
+                className="w-56" // Increased width
+                size="sm"
+              >
+                <SelectItem key="all">All Statuses</SelectItem>
+                <SelectItem key="NEEDS_MANUAL_REVIEW">Needs Manual Review</SelectItem>
+                <SelectItem key="PROCESSED">Processed</SelectItem>
+                <SelectItem key="PENDING">Pending</SelectItem>
+              </Select>
+              )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full">
-              <AnimatePresence mode="wait">
-                {loading && selectedMerchant ? (
-                  <motion.div
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+                <AnimatePresence mode="wait">
+                  {loading && selectedMerchant ? (
+                    <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
                     data-testid="loading-skeleton"
                   >
                     {[...Array(3)].map((_, i) => (
@@ -486,7 +589,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -510,7 +613,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -518,7 +621,7 @@ export default function FileUploadPage() {
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
                     >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       Please select an account
@@ -534,11 +637,14 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
+                    className="min-h-[33rem]" // Adjusted min-height to match empty states
                   >
                     <Table
                       aria-label="Staging Entries"
                       className="min-w-full"
                       data-testid="staging-entries-table"
+                      sortDescriptor={stagingSortDescriptor}
+                      onSortChange={setStagingSortDescriptor}
                       bottomContent={
                         stagingPages > 1 ? (
                           <div
@@ -558,73 +664,102 @@ export default function FileUploadPage() {
                       <TableHeader>
                         <TableColumn>Order ID</TableColumn>
                         <TableColumn>Entry Type</TableColumn>
-                        <TableColumn>Amount</TableColumn>
+                        <TableColumn className="text-right">Amount</TableColumn>
                         <TableColumn>Currency</TableColumn>
-                        <TableColumn>Status</TableColumn>
-                        <TableColumn>Effective Date</TableColumn>
-                        <TableColumn>Created At</TableColumn>
-                        <TableColumn>Discarded At</TableColumn>
+                        <TableColumn className="text-center">Status</TableColumn>
+                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
+                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
                       </TableHeader>
-                      <TableBody items={stagingItems} emptyContent={<></>}>
+                      <TableBody items={stagingItems}>
                         {(entry) => (
                           <TableRow key={entry.staging_entry_id}>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-sm align-middle">
                               {entry.metadata?.order_id || "-"}
                             </TableCell>
-                            <TableCell>{entry.entry_type}</TableCell>
-                            <TableCell>{entry.amount}</TableCell>
-                            <TableCell>{entry.currency}</TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
+                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
+                            <TableCell className="align-middle">{entry.currency}</TableCell>
+                            <TableCell className="text-center align-middle">
                               <span
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                   entry.status === "PROCESSED"
                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                     : entry.status === "NEEDS_MANUAL_REVIEW"
                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                      : entry.status === "PENDING"
+                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                 }`}
                               >
                                 {entry.status}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.effective_date).toLocaleString()}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.created_at).toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              {entry.discarded_at
-                                ? new Date(entry.discarded_at).toLocaleString()
-                                : "-"}
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              </div> {/* Closing new wrapper */}
             </Card>
             {/* Account Entries Table */}
             <motion.div
               variants={fadeInUp}
               custom={1}
-              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mt-10" // Added mt-10 for more spacing
             >
               <h2 className="text-lg sm:text-2xl font-semibold">
                 Processed Entries
               </h2>
+              {selectedAccount && (
+                <div className="flex gap-2"> {/* Wrapper for two filters */}
+                  <Select
+                    aria-label="Filter Account Entries by Entry Status"
+                    placeholder="Filter Entry Status"
+                    selectedKeys={entriesStatusFilter === "all" ? [] : [entriesStatusFilter]}
+                    onSelectionChange={(keys) => setEntriesStatusFilter(Array.from(keys)[0] as string || "all")}
+                    className="w-56"
+                    size="sm"
+                  >
+                    <SelectItem key="all">All Entry Statuses</SelectItem>
+                    <SelectItem key="EXPECTED">Expected</SelectItem>
+                    <SelectItem key="POSTED">Posted</SelectItem>
+                    <SelectItem key="ARCHIVED">Archived</SelectItem>
+                  </Select>
+                  <Select
+                    aria-label="Filter Account Entries by Recon Status"
+                    placeholder="Filter Recon Status"
+                    selectedKeys={entriesReconStatusFilter === "all" ? [] : [entriesReconStatusFilter]}
+                    onSelectionChange={(keys) => setEntriesReconStatusFilter(Array.from(keys)[0] as string || "all")}
+                    className="w-56"
+                    size="sm"
+                  >
+                    <SelectItem key="all">All Recon Statuses</SelectItem>
+                    <SelectItem key="EXPECTED">Expected</SelectItem>
+                    <SelectItem key="POSTED">Posted</SelectItem>
+                    <SelectItem key="MISMATCH">Mismatch</SelectItem>
+                    <SelectItem key="ARCHIVED">Archived</SelectItem>
+                  </Select>
+                </div>
+              )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6">
-              <AnimatePresence mode="wait">
-                {loading && selectedMerchant ? (
-                  <motion.div
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+                <AnimatePresence mode="wait">
+                  {loading && selectedMerchant ? (
+                    <motion.div
                     key="skeleton"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4"
+                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
                     data-testid="loading-skeleton"
                   >
                     {[...Array(3)].map((_, i) => (
@@ -643,7 +778,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -667,7 +802,7 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center gap-3 py-14 text-center"
+                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
                     data-testid="empty-state"
                   >
                     <motion.div
@@ -675,7 +810,7 @@ export default function FileUploadPage() {
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
                     >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
                     </motion.div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       Please select an account
@@ -691,11 +826,14 @@ export default function FileUploadPage() {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
+                    className="min-h-[33rem]" // Adjusted min-height to match empty states
                   >
                     <Table
                       aria-label="Account Entries"
                       className="min-w-full"
                       data-testid="account-entries-table"
+                      sortDescriptor={entriesSortDescriptor}
+                      onSortChange={setEntriesSortDescriptor}
                       bottomContent={
                         entriesPages > 1 ? (
                           <div
@@ -715,55 +853,72 @@ export default function FileUploadPage() {
                       <TableHeader>
                         <TableColumn>Order ID</TableColumn>
                         <TableColumn>Entry Type</TableColumn>
-                        <TableColumn>Amount</TableColumn>
+                        <TableColumn className="text-right">Amount</TableColumn>
                         <TableColumn>Currency</TableColumn>
-                        <TableColumn>Status</TableColumn>
-                        <TableColumn>Effective Date</TableColumn>
-                        <TableColumn>Created At</TableColumn>
-                        <TableColumn>Discarded At</TableColumn>
+                        <TableColumn className="text-center">Entry Status</TableColumn>
+                        <TableColumn className="text-center">Recon Status</TableColumn>
+                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
+                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
                       </TableHeader>
-                      <TableBody items={entriesItems} emptyContent={<></>}>
+                      <TableBody items={entriesItems}>
                         {(entry) => (
                           <TableRow key={entry.entry_id}>
-                            <TableCell className="font-mono text-sm">
+                            <TableCell className="font-mono text-sm align-middle">
                               {entry.metadata?.order_id || "-"}
                             </TableCell>
-                            <TableCell>{entry.entry_type}</TableCell>
-                            <TableCell>{entry.amount}</TableCell>
-                            <TableCell>{entry.currency}</TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
+                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
+                            <TableCell className="align-middle">{entry.currency}</TableCell>
+                            <TableCell className="text-center align-middle">
                               <span
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
                                   entry.status === "POSTED"
                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                     : entry.status === "EXPECTED"
                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                      : entry.status === "ARCHIVED"
-                                        ? "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                      : entry.status === "ARCHIVED" 
+                                        ? "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300" 
                                         : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                 }`}
                               >
                                 {entry.status}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-center align-middle">
+                              {entry.transaction?.status ? (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                    entry.transaction.status === "POSTED"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                      : entry.transaction.status === "EXPECTED"
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                        : entry.transaction.status === "ARCHIVED"
+                                          ? "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
+                                          : entry.transaction.status === "MISMATCH"
+                                            ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
+                                            : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {entry.transaction.status}
+                                </span>
+                              ) : (
+                                "-" 
+                              )}
+                            </TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.effective_date).toLocaleString()}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-middle">
                               {new Date(entry.created_at).toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              {entry.discarded_at
-                                ? new Date(entry.discarded_at).toLocaleString()
-                                : "-"}
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              </div> {/* Closing new wrapper */}
             </Card>
           </main>
         </div>
