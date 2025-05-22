@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import RowSteps from "@/components/RowSteps";
+import RowSteps from "@/components/row-steps";
 import AccountCreationPage from "./account-creation";
 import FileUploadPage from "./file-upload";
 import RulesMappingPage from "./rules-mapping";
 import DefaultLayout from "@/layouts/default";
 import MerchantManagementPage from "./merchant-creation";
-import NavigationButtons from "@/components/NavigationButtons";
+import NavigationButtons from "@/components/navigation-buttons";
 
 const pageSteps = [
   { title: "Merchant Creation" },

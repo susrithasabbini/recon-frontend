@@ -4,23 +4,7 @@ import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-
-interface FileUploadFormProps {
-  selectedAccount: string;
-  loading: boolean;
-  processingMode: string;
-  setProcessingMode: (mode: string) => void;
-  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleUploadClick: () => void;
-  filename: string | null;
-  uploadStatus: {
-    message: string;
-    successful: number;
-    failed: number;
-    errors: { row: number; details: string }[];
-  } | null;
-  isFileSelected: boolean;
-}
+import type { FileUploadFormProps } from "@/types";
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -126,13 +110,13 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
                 <span data-testid="file-name-status">File: {filename}</span>
                 <span
                   className={`font-medium ${
-                    uploadStatus.failed === 0
+                    uploadStatus.failed_ingestions === 0
                       ? "text-green-600 dark:text-green-400"
                       : "text-yellow-600 dark:text-yellow-400"
                   }`}
                 >
-                  {uploadStatus.successful} successful,{" "}
-                  {uploadStatus.failed} failed
+                  {uploadStatus.successful_ingestions} successful,{" "}
+                  {uploadStatus.failed_ingestions} failed
                 </span>
               </div>
               {uploadStatus.errors &&
@@ -143,7 +127,7 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
                     </p>
                     {uploadStatus.errors.map((error, index) => (
                       <p key={index} className="text-xs">
-                        Row {error.row}: {error.details}
+                        Row {error.row_number}: {error.error_details}
                       </p>
                     ))}
                   </div>
