@@ -29,14 +29,7 @@ import { addToast } from "@heroui/toast";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { useDefaultContext } from "@/contexts/default-context";
-
-interface Merchant {
-  merchant_id: string;
-  merchant_name: string;
-  merchant_code: string;
-  status: "ACTIVE" | "INACTIVE";
-  created_at: string;
-}
+import type { Merchant } from "@/types";
 
 /**
  * Motion variants for reusable animations

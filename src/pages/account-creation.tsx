@@ -31,17 +31,7 @@ import { addToast } from "@heroui/toast";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { useDefaultContext } from "@/contexts/default-context";
-
-interface Account {
-  account_id: string;
-  merchant_id: string;
-  account_name: string;
-  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
-  currency: string;
-  posted_balance: string;
-  pending_balance: string;
-  available_balance: string;
-}
+import type { Account } from "@/types";
 
 /**
  * Motion variants for reusable animations

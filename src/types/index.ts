@@ -1,5 +1,7 @@
-import { SVGProps } from "react";
+// Barrel file for re-exporting all type definitions
 
-export type IconSvgProps = SVGProps<SVGSVGElement> & {
-  size?: number;
-};
+export * from "./common.types";
+export * from "./merchant.types";
+export * from "./account.types";
+export * from "./rule.types";
+export * from "./file.types";

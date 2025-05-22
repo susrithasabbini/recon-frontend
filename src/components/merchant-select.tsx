@@ -9,13 +9,9 @@ import {
   ModalBody,
   ModalFooter,
 } from "@heroui/modal";
-import { PlusIcon } from "@heroicons/react/24/outline";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
-
-interface MerchantSelectProps {
-  className?: string;
-}
+import type { MerchantSelectProps } from "@/types";
 
 export default function MerchantSelect({ className }: MerchantSelectProps) {
   const {

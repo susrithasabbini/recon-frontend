@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from "react"; 
+import { useState, useEffect, useMemo } from "react";
 import { Select, SelectItem } from "@heroui/select";
-import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
+import { Switch } from "@heroui/switch"; // Corrected import path
+import { Card, CardHeader, CardBody } from "@heroui/card";
 import {
   Table,
   TableHeader,
@@ -12,74 +13,22 @@ import {
 } from "@heroui/table";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pagination } from "@heroui/pagination";
-import { ArrowUpTrayIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowUpTrayIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { title } from "@/components/primitives";
 import { addToast } from "@heroui/toast";
 import { useDefaultContext } from "@/contexts/default-context";
 import api from "@/config/axios";
-import FileUploadForm from "@/components/FileUploadForm";
-
-interface Account {
-  account_id: string;
-  merchant_id: string;
-  account_name: string;
-  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
-  currency: string;
-  posted_balance: string;
-  pending_balance: string;
-  available_balance: string;
-}
-
-interface StagingEntry {
-  staging_entry_id: string;
-  account_id: string;
-  entry_type: "DEBIT" | "CREDIT";
-  amount: string;
-  currency: string;
-  status: string;
-  effective_date: string;
-  metadata: Record<string, any>;
-  discarded_at: string | null;
-  created_at: string;
-  updated_at: string;
-  account: {
-    account_name: string;
-    merchant_id: string;
-  };
-}
-
-interface AccountEntry {
-  entry_id: string;
-  account_id: string;
-  transaction_id: string;
-  entry_type: "DEBIT" | "CREDIT";
-  amount: number;
-  currency: string;
-  status: "EXPECTED" | "POSTED" | "ARCHIVED"; // This might be the entry's own status, distinct from transaction status
-  effective_date: string;
-  metadata: Record<string, any>;
-  discarded_at: string | null;
-  created_at: string;
-  updated_at: string;
-  transaction?: { // Made optional as it might not always be present, or use a specific type if always present
-    transaction_id: string;
-    status: "EXPECTED" | "POSTED" | "MISMATCH" | "ARCHIVED";
-    logical_transaction_id?: string; // Optional based on example
-    version?: number; // Optional based on example
-  };
-}
-
-interface UploadResponse {
-  message: string;
-  successful_ingestions: number;
-  failed_ingestions: number;
-  errors: {
-    row_number: number;
-    error_details: string;
-    row_data: Record<string, any>;
-  }[];
-}
+import FileUploadForm from "@/components/file-upload-form";
+import type {
+  Account,
+  StagingEntry,
+  AccountEntry,
+  UploadResponse,
+} from "@/types";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -108,32 +57,37 @@ export default function FileUploadPage() {
   const [loading, setLoading] = useState(false);
   const [filename, setFilename] = useState<string | null>(null);
   const [stagingPage, setStagingPage] = useState(1);
-  const [stagingStatusFilter, setStagingStatusFilter] = useState<string | "all">("all");
+  const [stagingStatusFilter, setStagingStatusFilter] = useState<
+    string | "all"
+  >("all");
   const [entriesPage, setEntriesPage] = useState(1);
-  const [entriesStatusFilter, setEntriesStatusFilter] = useState<string | "all">("all");
-  const [entriesReconStatusFilter, setEntriesReconStatusFilter] = useState<string | "all">("all"); // New filter state
+  const [entriesStatusFilter, setEntriesStatusFilter] = useState<
+    string | "all"
+  >("all");
+  const [entriesReconStatusFilter, setEntriesReconStatusFilter] = useState<
+    string | "all"
+  >("all"); // New filter state
+  const [excludeArchivedTransactions, setExcludeArchivedTransactions] =
+    useState<boolean>(false); // New state for the switch
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [processingMode, setProcessingMode] = useState<string>("CONFIRMATION");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [stagingEntries, setStagingEntries] = useState<StagingEntry[]>([]);
   const [accountEntries, setAccountEntries] = useState<AccountEntry[]>([]);
-  const [uploadStatus, setUploadStatus] = useState<{
-    message: string;
-    successful: number;
-    failed: number;
-    errors: { row: number; details: string }[];
-  } | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<UploadResponse | null>(null);
   const rowsPerPage = 10; // Changed to 10
 
-  const [stagingSortDescriptor, setStagingSortDescriptor] = useState<SortDescriptor>({
-    column: "created_at",
-    direction: "descending",
-  });
-  const [entriesSortDescriptor, setEntriesSortDescriptor] = useState<SortDescriptor>({
-    column: "created_at",
-    direction: "descending",
-  });
+  const [stagingSortDescriptor, setStagingSortDescriptor] =
+    useState<SortDescriptor>({
+      column: "created_at",
+      direction: "descending",
+    });
+  const [entriesSortDescriptor, setEntriesSortDescriptor] =
+    useState<SortDescriptor>({
+      column: "created_at",
+      direction: "descending",
+    });
 
   // Reset state when merchant changes
   useEffect(() => {
@@ -146,6 +100,7 @@ export default function FileUploadPage() {
     setAccountEntries([]);
     setEntriesStatusFilter("all");
     setEntriesReconStatusFilter("all"); // Reset new filter
+    setExcludeArchivedTransactions(false); // Reset new switch state
     setEntriesPage(1);
     setFilename(null);
     setUploadStatus(null);
@@ -249,12 +204,12 @@ export default function FileUploadPage() {
         });
         setSelectedFile(null);
         setFilename(null);
-        e.target.value = ""; 
+        e.target.value = "";
         return;
       }
       setSelectedFile(file);
       setFilename(file.name);
-      setUploadStatus(null); 
+      setUploadStatus(null);
     } else {
       setSelectedFile(null);
       setFilename(null);
@@ -281,7 +236,7 @@ export default function FileUploadPage() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("processing_mode", processingMode); 
+      formData.append("processing_mode", processingMode);
 
       const { data } = await api.post<UploadResponse>(
         `/accounts/${selectedAccount}/staging-entries/files`,
@@ -291,15 +246,7 @@ export default function FileUploadPage() {
         }
       );
 
-      setUploadStatus({
-        message: data.message,
-        successful: data.successful_ingestions,
-        failed: data.failed_ingestions,
-        errors: data.errors.map((err) => ({
-          row: err.row_number,
-          details: err.error_details,
-        })),
-      });
+      setUploadStatus(data); // Directly use the response from API
 
       if (data.failed_ingestions === 0) {
         addToast({
@@ -324,7 +271,7 @@ export default function FileUploadPage() {
     } finally {
       setLoading(false);
       setSelectedFile(null);
-      setFilename(null); 
+      setFilename(null);
     }
   };
 
@@ -334,7 +281,9 @@ export default function FileUploadPage() {
     if (stagingStatusFilter === "all") {
       result = stagingEntries;
     } else {
-      result = stagingEntries.filter(entry => entry.status === stagingStatusFilter);
+      result = stagingEntries.filter(
+        (entry) => entry.status === stagingStatusFilter
+      );
     }
     return result;
   }, [stagingEntries, stagingStatusFilter]);
@@ -354,8 +303,10 @@ export default function FileUploadPage() {
         let cmpResult = 0;
 
         if (valA == null && valB == null) cmpResult = 0;
-        else if (valA == null) cmpResult = -1; // nulls first
-        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (valA == null)
+          cmpResult = -1; // nulls first
+        else if (valB == null)
+          cmpResult = 1; // nulls first
         else if (key === "created_at" || key === "effective_date") {
           const dateA = new Date(valA as string).getTime();
           const dateB = new Date(valB as string).getTime();
@@ -383,17 +334,39 @@ export default function FileUploadPage() {
     );
     return items;
   }, [filteredStagingEntries, stagingPage, rowsPerPage, stagingSortDescriptor]);
-  
+
   // Memoized filtered account entries
   // Memoized filtered account entries
   const filteredAccountEntries = useMemo(() => {
-    const result = accountEntries.filter(entry => {
-      const entryStatusMatch = entriesStatusFilter === "all" || entry.status === entriesStatusFilter;
-      const reconStatusMatch = entriesReconStatusFilter === "all" || entry.transaction?.status === entriesReconStatusFilter;
+    const result = accountEntries.filter((entry) => {
+      const entryStatusMatch =
+        entriesStatusFilter === "all" || entry.status === entriesStatusFilter;
+      let reconStatusMatch =
+        entriesReconStatusFilter === "all" ||
+        entry.transaction?.status === entriesReconStatusFilter;
+
+      // Apply the "Exclude Archived Transactions" filter
+      if (
+        excludeArchivedTransactions &&
+        entry.transaction?.status === "ARCHIVED"
+      ) {
+        // If excluding archived, and this entry IS archived, then it's a mismatch
+        // UNLESS the recon status filter is specifically set to "ARCHIVED" (override)
+        if (entriesReconStatusFilter !== "ARCHIVED") {
+          return false; // Exclude this archived entry
+        }
+        // If entriesReconStatusFilter IS "ARCHIVED", reconStatusMatch will correctly be true.
+      }
+
       return entryStatusMatch && reconStatusMatch;
     });
     return result;
-  }, [accountEntries, entriesStatusFilter, entriesReconStatusFilter]);
+  }, [
+    accountEntries,
+    entriesStatusFilter,
+    entriesReconStatusFilter,
+    excludeArchivedTransactions,
+  ]);
 
   const entriesPages = Math.max(
     1,
@@ -406,21 +379,28 @@ export default function FileUploadPage() {
         const key = entriesSortDescriptor.column as keyof AccountEntry;
         const valA = a[key];
         const valB = b[key];
-        
+
         let cmpResult = 0;
 
         if (valA == null && valB == null) cmpResult = 0;
-        else if (valA == null) cmpResult = -1; // nulls first
-        else if (valB == null) cmpResult = 1;  // nulls first
+        else if (valA == null)
+          cmpResult = -1; // nulls first
+        else if (valB == null)
+          cmpResult = 1; // nulls first
         else if (key === "created_at" || key === "effective_date") {
           const dateA = new Date(valA as string).getTime();
           const dateB = new Date(valB as string).getTime();
           cmpResult = dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
         } else if (key === "amount") {
-          cmpResult = (valA as number) < (valB as number) ? -1 : (valA as number) > (valB as number) ? 1 : 0;
+          cmpResult =
+            (valA as number) < (valB as number)
+              ? -1
+              : (valA as number) > (valB as number)
+                ? 1
+                : 0;
         } else {
           // Fallback to string comparison for other properties if any
-           cmpResult = String(valA).localeCompare(String(valB));
+          cmpResult = String(valA).localeCompare(String(valB));
         }
 
         if (entriesSortDescriptor.direction === "descending") {
@@ -442,7 +422,11 @@ export default function FileUploadPage() {
 
   useEffect(() => {
     setEntriesPage(1);
-  }, [entriesStatusFilter, entriesReconStatusFilter]); // Also reset on new filter change
+  }, [
+    entriesStatusFilter,
+    entriesReconStatusFilter,
+    excludeArchivedTransactions,
+  ]); // Also reset on new filter change
 
   return (
     <>
@@ -486,8 +470,19 @@ export default function FileUploadPage() {
               <Card className="shadow-xl border border-gray-100 dark:border-gray-800 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 w-full">
                 <CardHeader className="flex items-center gap-2 p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 bg-primary/5 dark:bg-primary/10 rounded-t-xl">
                   <div className="p-2 bg-primary/20 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-6 h-6 text-primary"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                      />
                     </svg>
                   </div>
                   <h2 className="text-lg sm:text-xl font-semibold">
@@ -497,7 +492,12 @@ export default function FileUploadPage() {
                 <CardBody className="p-4 sm:p-6">
                   <div className="space-y-4 sm:space-y-6">
                     <div className="flex flex-col gap-2">
-                      <label htmlFor="account-select-page" className="font-medium">Select Account</label>
+                      <label
+                        htmlFor="account-select-page"
+                        className="font-medium"
+                      >
+                        Select Account
+                      </label>
                       <Select
                         id="account-select-page"
                         aria-label="Select Account"
@@ -546,168 +546,197 @@ export default function FileUploadPage() {
                 Processing Entries
               </h2>
               {selectedAccount && (
-              <Select
-                aria-label="Filter Staging Entries by Status"
-                placeholder="Filter by Status"
-                selectedKeys={stagingStatusFilter === "all" ? [] : [stagingStatusFilter]}
-                onSelectionChange={(keys) => setStagingStatusFilter(Array.from(keys)[0] as string || "all")}
-                className="w-56" // Increased width
-                size="sm"
-              >
-                <SelectItem key="all">All Statuses</SelectItem>
-                <SelectItem key="NEEDS_MANUAL_REVIEW">Needs Manual Review</SelectItem>
-                <SelectItem key="PROCESSED">Processed</SelectItem>
-                <SelectItem key="PENDING">Pending</SelectItem>
-              </Select>
+                <Select
+                  aria-label="Filter Staging Entries by Status"
+                  placeholder="Filter by Status"
+                  selectedKeys={
+                    stagingStatusFilter === "all" ? [] : [stagingStatusFilter]
+                  }
+                  onSelectionChange={(keys) =>
+                    setStagingStatusFilter(
+                      (Array.from(keys)[0] as string) || "all"
+                    )
+                  }
+                  className="w-56" // Increased width
+                  size="sm"
+                >
+                  <SelectItem key="all">All Statuses</SelectItem>
+                  <SelectItem key="NEEDS_MANUAL_REVIEW">
+                    Needs Manual Review
+                  </SelectItem>
+                  <SelectItem key="PROCESSED">Processed</SelectItem>
+                  <SelectItem key="PENDING">Pending</SelectItem>
+                </Select>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
-              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full min-h-[33rem] flex flex-col">
+              {" "}
+              {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center">
+                {" "}
+                {/* New wrapper for centering content */}
                 <AnimatePresence mode="wait">
                   {loading && selectedMerchant ? (
                     <motion.div
-                    key="skeleton"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
-                    data-testid="loading-skeleton"
-                  >
-                    {[...Array(3)].map((_, i) => (
+                      key="skeleton"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
+                      data-testid="loading-skeleton"
+                    >
+                      {[...Array(3)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                        />
+                      ))}
+                    </motion.div>
+                  ) : !selectedMerchant ? (
+                    <motion.div
+                      key="empty"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
+                      data-testid="empty-state"
+                    >
                       <motion.div
-                        key={i}
-                        className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      />
-                    ))}
-                  </motion.div>
-                ) : !selectedMerchant ? (
-                  <motion.div
-                    key="empty"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
-                    data-testid="empty-state"
-                  >
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
-                    >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      >
+                        <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      </motion.div>
+                      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                        Please select a merchant first
+                      </p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">
+                        Select a merchant to view staging entries
+                      </p>
                     </motion.div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      Please select a merchant first
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Select a merchant to view staging entries
-                    </p>
-                  </motion.div>
-                ) : !selectedAccount ? (
-                  <motion.div
-                    key="empty"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
-                    data-testid="empty-state"
-                  >
+                  ) : !selectedAccount ? (
                     <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      key="empty"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
+                      data-testid="empty-state"
                     >
-                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+                      <motion.div
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      >
+                        <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+                      </motion.div>
+                      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                        Please select an account
+                      </p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">
+                        Select an account to view staging entries
+                      </p>
                     </motion.div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      Please select an account
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Select an account to view staging entries
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="table"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="min-h-[33rem]" // Adjusted min-height to match empty states
-                  >
-                    <Table
-                      aria-label="Staging Entries"
-                      className="min-w-full"
-                      data-testid="staging-entries-table"
-                      sortDescriptor={stagingSortDescriptor}
-                      onSortChange={setStagingSortDescriptor}
-                      bottomContent={
-                        stagingPages > 1 ? (
-                          <div
-                            className="flex w-full justify-center gap-2 py-4"
-                            data-testid="staging-pagination"
-                          >
-                            <Pagination
-                              total={stagingPages}
-                              initialPage={stagingPage}
-                              onChange={(newPage) => setStagingPage(newPage)}
-                              showControls
-                            />
-                          </div>
-                        ) : null
-                      }
+                  ) : (
+                    <motion.div
+                      key="table"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="min-h-[33rem]" // Adjusted min-height to match empty states
                     >
-                      <TableHeader>
-                        <TableColumn>Order ID</TableColumn>
-                        <TableColumn>Entry Type</TableColumn>
-                        <TableColumn className="text-right">Amount</TableColumn>
-                        <TableColumn>Currency</TableColumn>
-                        <TableColumn className="text-center">Status</TableColumn>
-                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
-                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
-                      </TableHeader>
-                      <TableBody items={stagingItems}>
-                        {(entry) => (
-                          <TableRow key={entry.staging_entry_id}>
-                            <TableCell className="font-mono text-sm align-middle">
-                              {entry.metadata?.order_id || "-"}
-                            </TableCell>
-                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
-                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
-                            <TableCell className="align-middle">{entry.currency}</TableCell>
-                            <TableCell className="text-center align-middle">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                                  entry.status === "PROCESSED"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                    : entry.status === "NEEDS_MANUAL_REVIEW"
-                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                      : entry.status === "PENDING"
-                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                }`}
-                              >
-                                {entry.status}
-                              </span>
-                            </TableCell>
-                            <TableCell className="align-middle">
-                              {new Date(entry.effective_date).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="align-middle">
-                              {new Date(entry.created_at).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </motion.div>
+                      <Table
+                        aria-label="Staging Entries"
+                        className="min-w-full"
+                        data-testid="staging-entries-table"
+                        sortDescriptor={stagingSortDescriptor}
+                        onSortChange={setStagingSortDescriptor}
+                        bottomContent={
+                          stagingPages > 1 ? (
+                            <div
+                              className="flex w-full justify-center gap-2 py-4"
+                              data-testid="staging-pagination"
+                            >
+                              <Pagination
+                                total={stagingPages}
+                                initialPage={stagingPage}
+                                onChange={(newPage) => setStagingPage(newPage)}
+                                showControls
+                              />
+                            </div>
+                          ) : null
+                        }
+                      >
+                        <TableHeader>
+                          <TableColumn>Order ID</TableColumn>
+                          <TableColumn>Entry Type</TableColumn>
+                          <TableColumn className="text-right">
+                            Amount
+                          </TableColumn>
+                          <TableColumn>Currency</TableColumn>
+                          <TableColumn className="text-center">
+                            Status
+                          </TableColumn>
+                          <TableColumn key="effective_date" allowsSorting>
+                            Effective Date
+                          </TableColumn>
+                          <TableColumn key="created_at" allowsSorting>
+                            Created At
+                          </TableColumn>
+                        </TableHeader>
+                        <TableBody items={stagingItems}>
+                          {(entry) => (
+                            <TableRow key={entry.staging_entry_id}>
+                              <TableCell className="font-mono text-sm align-middle">
+                                {entry.metadata?.order_id || "-"}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {entry.entry_type}
+                              </TableCell>
+                              <TableCell className="text-right align-middle">
+                                {entry.amount}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {entry.currency}
+                              </TableCell>
+                              <TableCell className="text-center align-middle">
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                    entry.status === "PROCESSED"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                      : entry.status === "NEEDS_MANUAL_REVIEW"
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                        : entry.status === "PENDING"
+                                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {entry.status}
+                                </span>
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {new Date(
+                                  entry.effective_date
+                                ).toLocaleString()}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {new Date(entry.created_at).toLocaleString()}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-              </div> {/* Closing new wrapper */}
+              </div>{" "}
+              {/* Closing new wrapper */}
             </Card>
             {/* Account Entries Table */}
             <motion.div
@@ -719,12 +748,20 @@ export default function FileUploadPage() {
                 Processed Entries
               </h2>
               {selectedAccount && (
-                <div className="flex gap-2"> {/* Wrapper for two filters */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {" "}
+                  {/* Wrapper for filters, allow wrapping */}
                   <Select
                     aria-label="Filter Account Entries by Entry Status"
                     placeholder="Filter Entry Status"
-                    selectedKeys={entriesStatusFilter === "all" ? [] : [entriesStatusFilter]}
-                    onSelectionChange={(keys) => setEntriesStatusFilter(Array.from(keys)[0] as string || "all")}
+                    selectedKeys={
+                      entriesStatusFilter === "all" ? [] : [entriesStatusFilter]
+                    }
+                    onSelectionChange={(keys) =>
+                      setEntriesStatusFilter(
+                        (Array.from(keys)[0] as string) || "all"
+                      )
+                    }
                     className="w-56"
                     size="sm"
                   >
@@ -736,8 +773,16 @@ export default function FileUploadPage() {
                   <Select
                     aria-label="Filter Account Entries by Recon Status"
                     placeholder="Filter Recon Status"
-                    selectedKeys={entriesReconStatusFilter === "all" ? [] : [entriesReconStatusFilter]}
-                    onSelectionChange={(keys) => setEntriesReconStatusFilter(Array.from(keys)[0] as string || "all")}
+                    selectedKeys={
+                      entriesReconStatusFilter === "all"
+                        ? []
+                        : [entriesReconStatusFilter]
+                    }
+                    onSelectionChange={(keys) =>
+                      setEntriesReconStatusFilter(
+                        (Array.from(keys)[0] as string) || "all"
+                      )
+                    }
                     className="w-56"
                     size="sm"
                   >
@@ -747,178 +792,213 @@ export default function FileUploadPage() {
                     <SelectItem key="MISMATCH">Mismatch</SelectItem>
                     <SelectItem key="ARCHIVED">Archived</SelectItem>
                   </Select>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      isSelected={excludeArchivedTransactions}
+                      onValueChange={setExcludeArchivedTransactions}
+                      aria-label="Exclude Archived Transactions"
+                      size="sm"
+                    />
+                    <span className="text-sm">Exclude Archived</span>
+                  </div>
                 </div>
               )}
             </motion.div>
-            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem] flex flex-col"> {/* Restored min-height and flex to Card */}
-              <div className="flex-grow flex flex-col justify-center"> {/* New wrapper for centering content */}
+            <Card className="shadow-lg border border-gray-100 dark:border-gray-800 w-full mt-6 min-h-[33rem] flex flex-col">
+              {" "}
+              {/* Restored min-height and flex to Card */}
+              <div className="flex-grow flex flex-col justify-center">
+                {" "}
+                {/* New wrapper for centering content */}
                 <AnimatePresence mode="wait">
                   {loading && selectedMerchant ? (
                     <motion.div
-                    key="skeleton"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
-                    data-testid="loading-skeleton"
-                  >
-                    {[...Array(3)].map((_, i) => (
+                      key="skeleton"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[33rem] flex flex-col justify-center items-center" // Added min-height & flex
+                      data-testid="loading-skeleton"
+                    >
+                      {[...Array(3)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                        />
+                      ))}
+                    </motion.div>
+                  ) : !selectedMerchant ? (
+                    <motion.div
+                      key="empty"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
+                      data-testid="empty-state"
+                    >
                       <motion.div
-                        key={i}
-                        className="h-6 sm:h-8 bg-gray-200 dark:bg-gray-800 rounded"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      />
-                    ))}
-                  </motion.div>
-                ) : !selectedMerchant ? (
-                  <motion.div
-                    key="empty"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
-                    data-testid="empty-state"
-                  >
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
-                    >
-                      <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      >
+                        <ArrowUpTrayIcon className="h-12 w-12 text-gray-400" />
+                      </motion.div>
+                      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                        Please select a merchant first
+                      </p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">
+                        Select a merchant to view account entries
+                      </p>
                     </motion.div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      Please select a merchant first
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Select a merchant to view account entries
-                    </p>
-                  </motion.div>
-                ) : !selectedAccount ? (
-                  <motion.div
-                    key="empty"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
-                    data-testid="empty-state"
-                  >
+                  ) : !selectedAccount ? (
                     <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      key="empty"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="flex flex-col items-center justify-center gap-3 text-center min-h-[33rem]" // Added min-height, removed py-14, h-full
+                      data-testid="empty-state"
                     >
-                      <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+                      <motion.div
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+                      >
+                        <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+                      </motion.div>
+                      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                        Please select an account
+                      </p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">
+                        Select an account to view account entries
+                      </p>
                     </motion.div>
-                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      Please select an account
-                    </p>
-                    <p className="text-gray-400 dark:text-gray-500 text-sm">
-                      Select an account to view account entries
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="table"
-                    variants={scaleIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    className="min-h-[33rem]" // Adjusted min-height to match empty states
-                  >
-                    <Table
-                      aria-label="Account Entries"
-                      className="min-w-full"
-                      data-testid="account-entries-table"
-                      sortDescriptor={entriesSortDescriptor}
-                      onSortChange={setEntriesSortDescriptor}
-                      bottomContent={
-                        entriesPages > 1 ? (
-                          <div
-                            className="flex w-full justify-center gap-2 py-4"
-                            data-testid="entries-pagination"
-                          >
-                            <Pagination
-                              total={entriesPages}
-                              initialPage={entriesPage}
-                              onChange={(newPage) => setEntriesPage(newPage)}
-                              showControls
-                            />
-                          </div>
-                        ) : null
-                      }
+                  ) : (
+                    <motion.div
+                      key="table"
+                      variants={scaleIn}
+                      initial="hidden"
+                      animate="visible"
+                      exit="hidden"
+                      className="min-h-[33rem]" // Adjusted min-height to match empty states
                     >
-                      <TableHeader>
-                        <TableColumn>Order ID</TableColumn>
-                        <TableColumn>Entry Type</TableColumn>
-                        <TableColumn className="text-right">Amount</TableColumn>
-                        <TableColumn>Currency</TableColumn>
-                        <TableColumn className="text-center">Entry Status</TableColumn>
-                        <TableColumn className="text-center">Recon Status</TableColumn>
-                        <TableColumn key="effective_date" allowsSorting>Effective Date</TableColumn>
-                        <TableColumn key="created_at" allowsSorting>Created At</TableColumn>
-                      </TableHeader>
-                      <TableBody items={entriesItems}>
-                        {(entry) => (
-                          <TableRow key={entry.entry_id}>
-                            <TableCell className="font-mono text-sm align-middle">
-                              {entry.metadata?.order_id || "-"}
-                            </TableCell>
-                            <TableCell className="align-middle">{entry.entry_type}</TableCell>
-                            <TableCell className="text-right align-middle">{entry.amount}</TableCell>
-                            <TableCell className="align-middle">{entry.currency}</TableCell>
-                            <TableCell className="text-center align-middle">
-                              <span
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                                  entry.status === "POSTED"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                    : entry.status === "EXPECTED"
-                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                      : entry.status === "ARCHIVED" 
-                                        ? "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300" 
-                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                                }`}
-                              >
-                                {entry.status}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center align-middle">
-                              {entry.transaction?.status ? (
+                      <Table
+                        aria-label="Account Entries"
+                        className="min-w-full"
+                        data-testid="account-entries-table"
+                        sortDescriptor={entriesSortDescriptor}
+                        onSortChange={setEntriesSortDescriptor}
+                        bottomContent={
+                          entriesPages > 1 ? (
+                            <div
+                              className="flex w-full justify-center gap-2 py-4"
+                              data-testid="entries-pagination"
+                            >
+                              <Pagination
+                                total={entriesPages}
+                                initialPage={entriesPage}
+                                onChange={(newPage) => setEntriesPage(newPage)}
+                                showControls
+                              />
+                            </div>
+                          ) : null
+                        }
+                      >
+                        <TableHeader>
+                          <TableColumn>Order ID</TableColumn>
+                          <TableColumn>Entry Type</TableColumn>
+                          <TableColumn className="text-right">
+                            Amount
+                          </TableColumn>
+                          <TableColumn>Currency</TableColumn>
+                          <TableColumn className="text-center">
+                            Entry Status
+                          </TableColumn>
+                          <TableColumn className="text-center">
+                            Recon Status
+                          </TableColumn>
+                          <TableColumn key="effective_date" allowsSorting>
+                            Effective Date
+                          </TableColumn>
+                          <TableColumn key="created_at" allowsSorting>
+                            Created At
+                          </TableColumn>
+                        </TableHeader>
+                        <TableBody items={entriesItems}>
+                          {(entry) => (
+                            <TableRow key={entry.entry_id}>
+                              <TableCell className="font-mono text-sm align-middle">
+                                {entry.metadata?.order_id || "-"}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {entry.entry_type}
+                              </TableCell>
+                              <TableCell className="text-right align-middle">
+                                {entry.amount}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {entry.currency}
+                              </TableCell>
+                              <TableCell className="text-center align-middle">
                                 <span
                                   className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
-                                    entry.transaction.status === "POSTED"
+                                    entry.status === "POSTED"
                                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                      : entry.transaction.status === "EXPECTED"
+                                      : entry.status === "EXPECTED"
                                         ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                        : entry.transaction.status === "ARCHIVED"
+                                        : entry.status === "ARCHIVED"
                                           ? "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
-                                          : entry.transaction.status === "MISMATCH"
-                                            ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
-                                            : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                   }`}
                                 >
-                                  {entry.transaction.status}
+                                  {entry.status}
                                 </span>
-                              ) : (
-                                "-" 
-                              )}
-                            </TableCell>
-                            <TableCell className="align-middle">
-                              {new Date(entry.effective_date).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="align-middle">
-                              {new Date(entry.created_at).toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </motion.div>
+                              </TableCell>
+                              <TableCell className="text-center align-middle">
+                                {entry.transaction?.status ? (
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium ${
+                                      entry.transaction.status === "POSTED"
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                        : entry.transaction.status ===
+                                            "EXPECTED"
+                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                          : entry.transaction.status ===
+                                              "ARCHIVED"
+                                            ? "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
+                                            : entry.transaction.status ===
+                                                "MISMATCH"
+                                              ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
+                                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    }`}
+                                  >
+                                    {entry.transaction.status}
+                                  </span>
+                                ) : (
+                                  "-"
+                                )}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {new Date(
+                                  entry.effective_date
+                                ).toLocaleString()}
+                              </TableCell>
+                              <TableCell className="align-middle">
+                                {new Date(entry.created_at).toLocaleString()}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-              </div> {/* Closing new wrapper */}
+              </div>{" "}
+              {/* Closing new wrapper */}
             </Card>
           </main>
         </div>

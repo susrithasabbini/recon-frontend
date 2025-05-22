@@ -1,33 +1,15 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import type { ButtonProps } from "@heroui/button"; // Changed from @heroui/react
 
 import React from "react";
 import { useControlledState } from "@react-stately/utils";
 import { m, LazyMotion, domAnimation } from "framer-motion";
 import clsx from "clsx";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline"; // Added
-import { Button } from "@heroui/button"; // Added for styling consistency
 
 // Helper for cn, assuming similar usage to other components in the project
 const cn = clsx;
-
-export type RowStepProps = {
-  title?: React.ReactNode;
-  className?: string;
-};
-
-export interface RowStepsProps extends React.HTMLAttributes<HTMLButtonElement> {
-  steps?: RowStepProps[];
-  color?: ButtonProps["color"];
-  currentStep?: number;
-  defaultStep?: number;
-  hideProgressBars?: boolean;
-  className?: string;
-  stepClassName?: string;
-  onStepChange?: (stepIndex: number) => void;
-}
+import type { RowStepsProps } from "@/types";
 
 function CheckIcon(props: ComponentProps<"svg">) {
   return (
@@ -68,12 +50,12 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
       className,
       ...props
     },
-    ref,
+    ref
   ) => {
     const [currentStep, setCurrentStep] = useControlledState(
       currentStepProp,
       defaultStep,
-      onStepChange,
+      onStepChange
     );
 
     const colors = React.useMemo(() => {
@@ -122,30 +104,13 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
       if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
       if (!className?.includes("--inactive-bar-color"))
         colorsVars.push(
-          "[--inactive-bar-color:hsl(var(--heroui-default-300))]",
+          "[--inactive-bar-color:hsl(var(--heroui-default-300))]"
         );
       return colorsVars;
     }, [color, className]);
 
-    const handlePrevious = () => {
-      setCurrentStep(Math.max(0, currentStep - 1));
-    };
-
-    const handleNext = () => {
-      setCurrentStep(Math.min(steps.length - 1, currentStep + 1));
-    };
-
     return (
       <div className="flex items-center gap-x-4 w-2/3">
-        {/* <Button
-          isIconOnly
-          variant="flat"
-          onPress={handlePrevious}
-          disabled={currentStep === 0}
-          aria-label="Previous step"
-        >
-          <ChevronLeftIcon className="h-5 w-5" />
-        </Button> */}
         <nav
           aria-label="Progress"
           className="flex flex-grow justify-center -my-4 overflow-x-auto py-4"
@@ -154,7 +119,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
             className={cn(
               "flex flex-row flex-nowrap gap-x-12",
               colors,
-              className,
+              className
             )}
           >
             {steps?.map((step, stepIdx) => {
@@ -170,7 +135,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                   key={stepIdx}
                   className={cn(
                     "relative flex items-center",
-                    !isLastStep && "pr-12",
+                    !isLastStep && "pr-12"
                   )}
                 >
                   <button
@@ -179,7 +144,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                     aria-current={status === "active" ? "step" : undefined}
                     className={cn(
                       "group flex cursor-pointer flex-col items-center justify-center gap-y-2 rounded-large py-2.5",
-                      stepClassName,
+                      stepClassName
                     )}
                     onClick={() => setCurrentStep(stepIdx)}
                     {...props}
@@ -190,7 +155,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                           <m.div
                             className={cn(
                               "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold text-default-foreground",
-                              { "shadow-lg": status === "complete" },
+                              { "shadow-lg": status === "complete" }
                             )}
                             initial={false}
                             transition={{ duration: 0.25 }}
@@ -227,7 +192,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                       <div
                         className={cn(
                           "text-small font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-medium whitespace-nowrap",
-                          { "text-default-500": status === "inactive" },
+                          { "text-default-500": status === "inactive" }
                         )}
                       >
                         {step.title}
@@ -243,7 +208,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                           className={cn(
                             "relative h-0.5 w-full bg-[var(--inactive-bar-color)] transition-colors duration-300",
                             "after:absolute after:block after:h-full after:w-0 after:bg-[var(--active-border-color)] after:transition-[width] after:duration-300 after:content-['']",
-                            { "after:w-full": stepIdx < currentStep },
+                            { "after:w-full": stepIdx < currentStep }
                           )}
                         />
                       </div>
@@ -254,18 +219,9 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
             })}
           </ol>
         </nav>
-        {/* <Button
-          isIconOnly
-          variant="flat"
-          onPress={handleNext}
-          disabled={currentStep === steps.length - 1}
-          aria-label="Next step"
-        >
-          <ChevronRightIcon className="h-5 w-5" />
-        </Button> */}
       </div>
     );
-  },
+  }
 );
 
 RowSteps.displayName = "RowSteps";

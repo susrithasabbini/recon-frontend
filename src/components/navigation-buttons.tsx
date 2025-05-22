@@ -1,12 +1,7 @@
 import React from "react";
 import { Button } from "@heroui/button"; // Assuming Button component is available
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
-
-interface NavigationButtonsProps {
-  currentStep: number;
-  setCurrentStep: (step: number) => void;
-  totalPages: number;
-}
+import type { NavigationButtonsProps } from "@/types";
 
 const NavigationButtons: React.FC<NavigationButtonsProps> = ({
   currentStep,

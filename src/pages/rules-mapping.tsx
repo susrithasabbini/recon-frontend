@@ -27,33 +27,7 @@ import {
   TableRow,
 } from "@heroui/table";
 import { Pagination } from "@heroui/pagination";
-
-interface AccountDetails {
-  account_id: string;
-  account_name: string;
-  merchant_id: string;
-}
-
-interface ReconRule {
-  id: string;
-  account_one_id: string;
-  account_two_id: string;
-  created_at: string;
-  updated_at: string;
-  accountOne: AccountDetails;
-  accountTwo: AccountDetails;
-}
-
-interface Account {
-  account_id: string;
-  merchant_id: string;
-  account_name: string;
-  account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
-  currency: string;
-  posted_balance: string;
-  pending_balance: string;
-  available_balance: string;
-}
+import type { Account, ReconRule } from "@/types";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -85,7 +59,7 @@ export default function RulesMappingPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [mappingToDelete, setMappingToDelete] = useState<ReconRule | null>(
-    null,
+    null
   );
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
@@ -120,7 +94,7 @@ export default function RulesMappingPage() {
       setLoading(true);
       try {
         const { data } = await api.get<ReconRule[]>(
-          `/merchants/${selectedMerchant}/recon-rules`,
+          `/merchants/${selectedMerchant}/recon-rules`
         );
         setMappings(data);
       } catch (error) {
@@ -162,7 +136,7 @@ export default function RulesMappingPage() {
         (m.account_one_id === newMapping.source &&
           m.account_two_id === newMapping.target) ||
         (m.account_one_id === newMapping.target &&
-          m.account_two_id === newMapping.source),
+          m.account_two_id === newMapping.source)
     );
 
     if (mappingExists) {
@@ -179,7 +153,7 @@ export default function RulesMappingPage() {
 
       // Fetch updated mappings after successful creation
       const { data: updatedMappings } = await api.get<ReconRule[]>(
-        `/merchants/${selectedMerchant}/recon-rules`,
+        `/merchants/${selectedMerchant}/recon-rules`
       );
       setMappings(updatedMappings);
 
@@ -208,12 +182,12 @@ export default function RulesMappingPage() {
     setLoading(true);
     try {
       await api.delete(
-        `/merchants/${selectedMerchant}/recon-rules/${mappingToDelete.id}`,
+        `/merchants/${selectedMerchant}/recon-rules/${mappingToDelete.id}`
       );
 
       // Fetch updated mappings after successful deletion
       const { data: updatedMappings } = await api.get<ReconRule[]>(
-        `/merchants/${selectedMerchant}/recon-rules`,
+        `/merchants/${selectedMerchant}/recon-rules`
       );
       setMappings(updatedMappings);
 
@@ -259,7 +233,7 @@ export default function RulesMappingPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
             )}
           >
             Rules Mapping
@@ -339,7 +313,7 @@ export default function RulesMappingPage() {
                           <SelectItem key={acc.account_id}>
                             {acc.account_name}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </Select>
                     {error && (

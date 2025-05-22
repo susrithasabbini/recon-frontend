@@ -1,82 +1,68 @@
-# Active Context
+# Active Context - 2025-05-22
 
 ## Current Focus
+- Completed task: "Refactor TypeScript types to follow clean coding patterns."
 
-Standardized table cell heights in `src/pages/account-creation.tsx` and `src/pages/rules-mapping.tsx` for visual consistency, using `py-0.5` padding.
+## Key Decisions & Changes
 
-## Key Decisions Made Recently
-
-- Applied a consistent vertical padding (`py-0.5`) to all `TableCell` components in both `account-creation.tsx` and `rules-mapping.tsx`. (Changed from `py-3` based on user feedback).
-- Standardized the size of action buttons and icons within table cells:
-  - In `rules-mapping.tsx`, the delete `Button` in the "Actions" cell was set to `size="sm"`.
-  - The `TrashIcon` within that button was changed from `w-5 h-5` to `w-4 h-4` to match the icon sizes in `account-creation.tsx`.
-
-## Next Steps (Immediate)
-
-- Update `progress.md` to log this task as completed with the revised padding.
-- Await further user instructions.
-
-## Code Snippet Example (Standardized TableCell in account-creation.tsx with py-0.5)
-
-```tsx
-// src/pages/account-creation.tsx (Relevant part)
-// ...
-<TableCell className="font-medium py-0.5"> {/* Updated to py-0.5 */}
-  {acc.account_name}
-</TableCell>
-<TableCell className="py-0.5"> {/* Updated to py-0.5 */}
-  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium">
-    {/* ... icon and text ... */}
-  </span>
-</TableCell>
-// ...
-```
-
-## Code Snippet Example (Standardized TableCell and Action Icon in rules-mapping.tsx with py-0.5)
-
-```tsx
-// src/pages/rules-mapping.tsx (Relevant part)
-// ...
-<TableCell className="whitespace-nowrap text-primary font-medium py-0.5"> {/* Updated to py-0.5 */}
-  {m.accountOne.account_name}
-</TableCell>
-<TableCell className="whitespace-nowrap text-secondary font-medium py-0.5"> {/* Updated to py-0.5 */}
-  {m.accountTwo.account_name}
-</TableCell>
-<TableCell className="whitespace-nowrap text-center py-0.5"> {/* Updated to py-0.5 */}
-  <div className="flex gap-2 justify-center">
-    <Tooltip content="Delete" placement="top">
-      <Button
-        isIconOnly
-        variant="light"
-        color="danger"
-        size="sm" // Ensured size="sm"
-        onPress={() => handleDelete(m)}
-        aria-label="Delete"
-        data-testid="delete-button"
-      >
-        <TrashIcon className="w-4 h-4" /> {/* Standardized to w-4 h-4 */}
-      </Button>
-    </Tooltip>
-  </div>
-</TableCell>
-// ...
-```
+### TypeScript Types Refactoring:
+- **Objective**: Improve organization and maintainability of TypeScript types.
+- **Strategy**:
+    - Identified all inline types in `src/pages` and `src/components`.
+    - Created domain-specific type files under `src/types/`:
+        - `common.types.ts` (for UI/utility types like `IconSvgProps`, `ThemeSwitchProps`, `NavigationButtonsProps`, `RowStepProps`, `RowStepsProps`)
+        - `merchant.types.ts` (for `Merchant`, `MerchantSelectProps`)
+        - `account.types.ts` (for `Account`, `AccountDetails`)
+        - `rule.types.ts` (for `ReconRule`)
+        - `file.types.ts` (for `StagingEntry`, `AccountEntry`, `UploadResponse`, `FileUploadFormProps`)
+    - Updated `src/types/index.ts` to be a barrel file re-exporting from the new type files.
+    - Refactored all component and page files to remove inline type definitions and import them from `@/types`.
+    - Corrected inconsistencies in `UploadResponse` type usage between `src/pages/file-upload.tsx` and `src/components/FileUploadForm.tsx`.
+    - Ensured props in `common.types.ts` for `ThemeSwitchProps`, `NavigationButtonsProps`, and `RowStepsProps` accurately matched their usage in respective components.
+- **Files Created/Modified**:
+    - `src/types/common.types.ts` (created)
+    - `src/types/merchant.types.ts` (created)
+    - `src/types/account.types.ts` (created)
+    - `src/types/rule.types.ts` (created)
+    - `src/types/file.types.ts` (created)
+    - `src/types/index.ts` (updated)
+    - `src/pages/merchant-creation.tsx` (refactored)
+    - `src/pages/account-creation.tsx` (refactored)
+    - `src/pages/rules-mapping.tsx` (refactored)
+    - `src/pages/file-upload.tsx` (refactored, type usage corrected)
+    - `src/components/theme-switch.tsx` (refactored)
+    - `src/components/NavigationButtons.tsx` (refactored)
+    - `src/components/RowSteps.tsx` (refactored)
+    - `src/components/merchant-select.tsx` (refactored)
+    - `src/components/FileUploadForm.tsx` (refactored, type usage corrected)
+    - `memory-bank/systemPatterns.md` (updated with new type structure)
 
 ---
+*Previous Context (Memory Bank Documentation Overhaul):*
 
-_(Previous Context - Stepper Arrow Styling)_
+### Memory Bank Documentation Overhaul:
+A comprehensive review and update of the Memory Bank was performed based on the current state of `src/pages/`.
 
-## Current Focus (Old - Stepper Arrows)
+**1. Page-Specific Documentation (`memory-bank/[pageName].md`):**
+    - **`account-creation.md`**: Reviewed and confirmed accuracy. Content re-saved.
+    - **`file-upload.md`**: Significantly updated to reflect current complex functionality (account selection, file upload to staging, polling for staging and processed entries, advanced filtering). Previous content was outdated.
+    - **`home.md`**: Created new document for this landing page, detailing its illustrative and navigational purpose.
+    - **`index-page-component.md`**: Created new document for `src/pages/index.tsx`, identifying it as a component/section ("How It Works" stepper) rather than a standalone page.
+    - **`MainProcessFlowPage.md`**: Created new document for this wizard-style page orchestrator.
+    - **`merchant-creation.md`**: Created new document, detailing its CRUD functionality for merchants.
+    - **`rules-mapping.md`**: Reviewed and confirmed accuracy. Content re-saved.
 
-Updated the `RowSteps.tsx` component to include built-in arrow navigation with improved horizontal alignment and spacing. External "Previous" and "Next" buttons were removed from `MainProcessFlowPage.tsx`.
+**2. Global Memory Bank Files:**
+    - **`systemPatterns.md`**: Updated to include:
+        - "Two-Column CRUD Pattern"
+        - "Complex Filtering Logic"
+        - "Wizard/Stepper Pattern"
+        - "Page Composition"
+        - Note on `src/pages/index.tsx`'s unconventional nature in Code Structure.
+        - Expanded "Backend Interaction" with more API endpoint examples and the "Polling for Real-time Updates" pattern.
+    - **`productContext.md`**: Updated "User Experience (UX) Expectations" section with concrete examples from the codebase that support existing expectations (e.g., polling for real-time insights, `MainProcessFlowPage` for guided actions, UI consistency).
+    - **`techContext.md`**: Reviewed, no major changes deemed necessary from this pass. The note about `src/pages/index.tsx` in `systemPatterns.md` was considered sufficient for now.
 
-## Key Decisions Made Recently (Old - Stepper Arrows)
-
-- Integrated navigation controls directly into the `RowSteps` component.
-- Used `ChevronLeftIcon` and `ChevronRightIcon` from `@heroicons/react/24/outline`.
-- Styled arrow buttons using `Button` from `@heroui/button` (`isIconOnly`, `variant="flat"`).
-- Ensured arrow buttons disable correctly at step boundaries.
-- Removed old navigation logic from `MainProcessFlowPage.tsx`.
-- **Adjusted styling in `RowSteps.tsx`**:
-  - Modified the `nav` element (containing the steps `ol`) by removing `max-w-fit` and adding `flex justify-center`. This allows the `nav` to `flex-grow` and center its `ol` content, improving overall horizontal alignment and spacing between the arrows and the step list.
+## Next Steps
+- Type refactoring task is complete.
+- Awaiting new tasks.
