@@ -9,7 +9,7 @@ import {
 import MerchantSelect from "./merchant-select";
 
 import { ThemeSwitch } from "@/components/theme-switch";
-import { ColorThemeSelector } from "@/components/ColorThemeSelector"; // Added import
+import { ColorThemeSelector } from "@/components/color-theme-selector"; // Added import
 import { ReconciliationLogo } from "@/components/icons";
 
 export const Navbar = () => {
