@@ -1,68 +1,64 @@
 # Active Context - 2025-05-22
 
 ## Current Focus
-- Completed task: "Refactor TypeScript types to follow clean coding patterns."
+
+- Implemented dynamic color theming feature, including focus ring theming for inputs and selects.
 
 ## Key Decisions & Changes
 
-### TypeScript Types Refactoring:
-- **Objective**: Improve organization and maintainability of TypeScript types.
+### Dynamic Color Theming:
+
+- **Objective**: Allow users to change the application's primary color scheme via a dropdown in the navbar, including focus indicators.
 - **Strategy**:
-    - Identified all inline types in `src/pages` and `src/components`.
-    - Created domain-specific type files under `src/types/`:
-        - `common.types.ts` (for UI/utility types like `IconSvgProps`, `ThemeSwitchProps`, `NavigationButtonsProps`, `RowStepProps`, `RowStepsProps`)
-        - `merchant.types.ts` (for `Merchant`, `MerchantSelectProps`)
-        - `account.types.ts` (for `Account`, `AccountDetails`)
-        - `rule.types.ts` (for `ReconRule`)
-        - `file.types.ts` (for `StagingEntry`, `AccountEntry`, `UploadResponse`, `FileUploadFormProps`)
-    - Updated `src/types/index.ts` to be a barrel file re-exporting from the new type files.
-    - Refactored all component and page files to remove inline type definitions and import them from `@/types`.
-    - Corrected inconsistencies in `UploadResponse` type usage between `src/pages/file-upload.tsx` and `src/components/FileUploadForm.tsx`.
-    - Ensured props in `common.types.ts` for `ThemeSwitchProps`, `NavigationButtonsProps`, and `RowStepsProps` accurately matched their usage in respective components.
+  - Defined multiple color themes (blue, red, pink, yellow, orange, violet, purple, green) with primary, focus, and content colors in `src/config/colorThemes.ts`.
+  - Introduced CSS custom properties (e.g., `--color-primary-rgb`) in `src/styles/globals.css` to hold theme color values.
+  - Configured Tailwind CSS (`tailwind.config.js`) to use these CSS custom properties for its semantic colors (`primary`, `primary-focus`, `primary-content`) and set the default `ringColor` to the theme's primary color.
+  - Created a `ColorThemeContext` (`src/contexts/ColorThemeContext.tsx`) to manage the active theme and apply it by updating CSS variables on the root element. The context also persists the selected theme to localStorage.
+  - Developed a `ColorThemeSelector` component (`src/components/ColorThemeSelector.tsx`) using HeroUI's `Select` component for theme selection.
+  - Integrated the `ColorThemeSelector` into the main `Navbar` component (`src/components/navbar.tsx`).
+  - Wrapped the entire application with `ColorThemeProvider` in `src/App.tsx`.
+  - Refactored `src/components/row-steps.tsx` and page titles to use theme-aware colors.
+  - Updated the `title` primitive in `src/components/primitives.ts`.
+  - Applied themed focus ring styles (`focus-within:ring-2 focus-within:ring-primary focus-within:border-primary` or `focus:ring-2 focus:ring-primary focus:border-primary`) to `Input` and `Select` components in `merchant-creation.tsx`, `account-creation.tsx`, `rules-mapping.tsx`, `file-upload.tsx`, and `file-upload-form.tsx` using their `classNames` prop.
 - **Files Created/Modified**:
-    - `src/types/common.types.ts` (created)
-    - `src/types/merchant.types.ts` (created)
-    - `src/types/account.types.ts` (created)
-    - `src/types/rule.types.ts` (created)
-    - `src/types/file.types.ts` (created)
-    - `src/types/index.ts` (updated)
-    - `src/pages/merchant-creation.tsx` (refactored)
-    - `src/pages/account-creation.tsx` (refactored)
-    - `src/pages/rules-mapping.tsx` (refactored)
-    - `src/pages/file-upload.tsx` (refactored, type usage corrected)
-    - `src/components/theme-switch.tsx` (refactored)
-    - `src/components/NavigationButtons.tsx` (refactored)
-    - `src/components/RowSteps.tsx` (refactored)
-    - `src/components/merchant-select.tsx` (refactored)
-    - `src/components/FileUploadForm.tsx` (refactored, type usage corrected)
-    - `memory-bank/systemPatterns.md` (updated with new type structure)
+  - `src/config/colorThemes.ts` (created)
+  - `src/styles/globals.css` (updated)
+  - `tailwind.config.js` (updated with ringColor)
+  - `src/contexts/ColorThemeContext.tsx` (created, updated)
+  - `src/components/ColorThemeSelector.tsx` (created, updated)
+  - `src/components/navbar.tsx` (updated)
+  - `src/App.tsx` (updated)
+  - `src/components/row-steps.tsx` (updated)
+  - `src/components/primitives.ts` (updated)
+  - `src/pages/merchant-creation.tsx` (updated for title and input focus rings)
+  - `src/pages/account-creation.tsx` (updated for title and input/select focus rings)
+  - `src/pages/rules-mapping.tsx` (updated for title and select focus rings)
+  - `src/pages/file-upload.tsx` (updated for title and select focus rings)
+  - `src/components/file-upload-form.tsx` (updated for select focus rings)
+  - `memory-bank/activeContext.md` (this update)
+  - `memory-bank/progress.md` (to be updated)
+  - `memory-bank/systemPatterns.md` (to be updated)
+  - `memory-bank/techContext.md` (to be updated)
 
 ---
-*Previous Context (Memory Bank Documentation Overhaul):*
 
-### Memory Bank Documentation Overhaul:
-A comprehensive review and update of the Memory Bank was performed based on the current state of `src/pages/`.
+_Previous Context (Type Refactoring):_
 
-**1. Page-Specific Documentation (`memory-bank/[pageName].md`):**
-    - **`account-creation.md`**: Reviewed and confirmed accuracy. Content re-saved.
-    - **`file-upload.md`**: Significantly updated to reflect current complex functionality (account selection, file upload to staging, polling for staging and processed entries, advanced filtering). Previous content was outdated.
-    - **`home.md`**: Created new document for this landing page, detailing its illustrative and navigational purpose.
-    - **`index-page-component.md`**: Created new document for `src/pages/index.tsx`, identifying it as a component/section ("How It Works" stepper) rather than a standalone page.
-    - **`MainProcessFlowPage.md`**: Created new document for this wizard-style page orchestrator.
-    - **`merchant-creation.md`**: Created new document, detailing its CRUD functionality for merchants.
-    - **`rules-mapping.md`**: Reviewed and confirmed accuracy. Content re-saved.
+### TypeScript Types Refactoring:
 
-**2. Global Memory Bank Files:**
-    - **`systemPatterns.md`**: Updated to include:
-        - "Two-Column CRUD Pattern"
-        - "Complex Filtering Logic"
-        - "Wizard/Stepper Pattern"
-        - "Page Composition"
-        - Note on `src/pages/index.tsx`'s unconventional nature in Code Structure.
-        - Expanded "Backend Interaction" with more API endpoint examples and the "Polling for Real-time Updates" pattern.
-    - **`productContext.md`**: Updated "User Experience (UX) Expectations" section with concrete examples from the codebase that support existing expectations (e.g., polling for real-time insights, `MainProcessFlowPage` for guided actions, UI consistency).
-    - **`techContext.md`**: Reviewed, no major changes deemed necessary from this pass. The note about `src/pages/index.tsx` in `systemPatterns.md` was considered sufficient for now.
+- **Objective**: Improve organization and maintainability of TypeScript types.
+- **Strategy**:
+  - Identified all inline types in `src/pages` and `src/components`.
+  - Created domain-specific type files under `src/types/`.
+  - Updated `src/types/index.ts` to be a barrel file.
+  - Refactored component and page files to import types from `@/types`.
+- **Files Created/Modified**:
+  - `src/types/common.types.ts`, `merchant.types.ts`, `account.types.ts`, `rule.types.ts`, `file.types.ts` (created)
+  - `src/types/index.ts` (updated)
+  - Various pages and components in `src/pages` and `src/components` (refactored)
+  - `memory-bank/systemPatterns.md` (updated)
 
 ## Next Steps
-- Type refactoring task is complete.
-- Awaiting new tasks.
+
+- Update `progress.md`, `systemPatterns.md`, and `techContext.md` in the Memory Bank.
+- User to verify focus ring theming for Inputs and Selects after restarting dev server.

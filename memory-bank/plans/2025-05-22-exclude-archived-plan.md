@@ -1,13 +1,14 @@
 ## Steps
-| Done | # | Action | Detail |
-|------|---|--------|--------|
-| [x]  | 1 | Identify relevant files | Search for terms like "processed entries", "transactions", "archived" in `src/` to locate components and data handling logic. Key file: `src/pages/file-upload.tsx`. |
-| [x]  | 2 | Analyze identified files | Read `src/pages/file-upload.tsx` to understand data flow, state, and UI for processed entries. |
-| [x]  | 3 | Locate 'archived' status property | Identified `entry.transaction.status === "ARCHIVED"` as the target. |
-| [x]  | 4 | Design UI for filter | Propose Switch component "Exclude Archived Transactions" (default ON), new state `excludeArchivedTransactions`. Logic: Toggle hides archived unless "Recon Status" dropdown explicitly selects "ARCHIVED". |
-| [x]  | 5 | Implement filter logic | Modified `filteredAccountEntries` in `src/pages/file-upload.tsx` to include logic for `excludeArchivedTransactions` state. |
-| [x]  | 6 | Integrate UI element | Added `Switch` component and new state `excludeArchivedTransactions` to `src/pages/file-upload.tsx`. Updated relevant hooks. |
-| [x]  | 7 | Test functionality | User confirmed application is working fine after changes. |
+
+| Done | #   | Action                            | Detail                                                                                                                                                                                                     |
+| ---- | --- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [x]  | 1   | Identify relevant files           | Search for terms like "processed entries", "transactions", "archived" in `src/` to locate components and data handling logic. Key file: `src/pages/file-upload.tsx`.                                       |
+| [x]  | 2   | Analyze identified files          | Read `src/pages/file-upload.tsx` to understand data flow, state, and UI for processed entries.                                                                                                             |
+| [x]  | 3   | Locate 'archived' status property | Identified `entry.transaction.status === "ARCHIVED"` as the target.                                                                                                                                        |
+| [x]  | 4   | Design UI for filter              | Propose Switch component "Exclude Archived Transactions" (default ON), new state `excludeArchivedTransactions`. Logic: Toggle hides archived unless "Recon Status" dropdown explicitly selects "ARCHIVED". |
+| [x]  | 5   | Implement filter logic            | Modified `filteredAccountEntries` in `src/pages/file-upload.tsx` to include logic for `excludeArchivedTransactions` state.                                                                                 |
+| [x]  | 6   | Integrate UI element              | Added `Switch` component and new state `excludeArchivedTransactions` to `src/pages/file-upload.tsx`. Updated relevant hooks.                                                                               |
+| [x]  | 7   | Test functionality                | User confirmed application is working fine after changes.                                                                                                                                                  |
 
 <!--
 {

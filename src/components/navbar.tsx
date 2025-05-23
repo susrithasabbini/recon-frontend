@@ -9,6 +9,7 @@ import {
 import MerchantSelect from "./merchant-select";
 
 import { ThemeSwitch } from "@/components/theme-switch";
+import { ColorThemeSelector } from "@/components/ColorThemeSelector"; // Added import
 import { ReconciliationLogo } from "@/components/icons";
 
 export const Navbar = () => {
@@ -30,6 +31,9 @@ export const Navbar = () => {
         </NavbarBrand>
       </NavbarContent>
       <NavbarContent justify="end">
+        <NavbarItem>
+          <ColorThemeSelector />
+        </NavbarItem>
         <NavbarItem>
           <ThemeSwitch />
         </NavbarItem>

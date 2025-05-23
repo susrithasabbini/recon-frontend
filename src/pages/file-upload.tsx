@@ -140,7 +140,7 @@ export default function FileUploadPage() {
 
       try {
         const { data } = await api.get<StagingEntry[]>(
-          `/accounts/${selectedAccount}/staging-entries`
+          `/accounts/${selectedAccount}/staging-entries`,
         );
         setStagingEntries(data);
       } catch (error) {
@@ -171,7 +171,7 @@ export default function FileUploadPage() {
 
       try {
         const { data } = await api.get<AccountEntry[]>(
-          `/accounts/${selectedAccount}/entries`
+          `/accounts/${selectedAccount}/entries`,
         );
         setAccountEntries(data);
       } catch (error) {
@@ -243,7 +243,7 @@ export default function FileUploadPage() {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       setUploadStatus(data); // Directly use the response from API
@@ -282,7 +282,7 @@ export default function FileUploadPage() {
       result = stagingEntries;
     } else {
       result = stagingEntries.filter(
-        (entry) => entry.status === stagingStatusFilter
+        (entry) => entry.status === stagingStatusFilter,
       );
     }
     return result;
@@ -290,7 +290,7 @@ export default function FileUploadPage() {
 
   const stagingPages = Math.max(
     1,
-    Math.ceil(filteredStagingEntries.length / rowsPerPage)
+    Math.ceil(filteredStagingEntries.length / rowsPerPage),
   );
   const stagingItems = useMemo(() => {
     let sortedEntries = [...filteredStagingEntries];
@@ -330,7 +330,7 @@ export default function FileUploadPage() {
     }
     const items = sortedEntries.slice(
       (stagingPage - 1) * rowsPerPage,
-      stagingPage * rowsPerPage
+      stagingPage * rowsPerPage,
     );
     return items;
   }, [filteredStagingEntries, stagingPage, rowsPerPage, stagingSortDescriptor]);
@@ -370,7 +370,7 @@ export default function FileUploadPage() {
 
   const entriesPages = Math.max(
     1,
-    Math.ceil(filteredAccountEntries.length / rowsPerPage)
+    Math.ceil(filteredAccountEntries.length / rowsPerPage),
   );
   const entriesItems = useMemo(() => {
     let sortedEntries = [...filteredAccountEntries];
@@ -411,7 +411,7 @@ export default function FileUploadPage() {
     }
     const items = sortedEntries.slice(
       (entriesPage - 1) * rowsPerPage,
-      entriesPage * rowsPerPage
+      entriesPage * rowsPerPage,
     );
     return items;
   }, [filteredAccountEntries, entriesPage, rowsPerPage, entriesSortDescriptor]);
@@ -447,8 +447,8 @@ export default function FileUploadPage() {
             variants={fadeInUp}
             custom={1}
             className={clsx(
-              title({ size: "md", color: "blue" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              title({ size: "md", color: "primary" }), // Changed color to "primary"
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
             File Upload
@@ -510,6 +510,10 @@ export default function FileUploadPage() {
                           setSelectedAccount(selected);
                         }}
                         data-testid="account-select"
+                        classNames={{
+                          trigger:
+                            "focus:ring-2 focus:ring-primary focus:border-primary",
+                        }}
                       >
                         {accounts.map((account) => (
                           <SelectItem key={account.account_id}>
@@ -554,11 +558,15 @@ export default function FileUploadPage() {
                   }
                   onSelectionChange={(keys) =>
                     setStagingStatusFilter(
-                      (Array.from(keys)[0] as string) || "all"
+                      (Array.from(keys)[0] as string) || "all",
                     )
                   }
                   className="w-56" // Increased width
                   size="sm"
+                  classNames={{
+                    trigger:
+                      "focus:ring-2 focus:ring-primary focus:border-primary",
+                  }}
                 >
                   <SelectItem key="all">All Statuses</SelectItem>
                   <SelectItem key="NEEDS_MANUAL_REVIEW">
@@ -722,7 +730,7 @@ export default function FileUploadPage() {
                               </TableCell>
                               <TableCell className="align-middle">
                                 {new Date(
-                                  entry.effective_date
+                                  entry.effective_date,
                                 ).toLocaleString()}
                               </TableCell>
                               <TableCell className="align-middle">
@@ -759,11 +767,15 @@ export default function FileUploadPage() {
                     }
                     onSelectionChange={(keys) =>
                       setEntriesStatusFilter(
-                        (Array.from(keys)[0] as string) || "all"
+                        (Array.from(keys)[0] as string) || "all",
                       )
                     }
                     className="w-56"
                     size="sm"
+                    classNames={{
+                      trigger:
+                        "focus:ring-2 focus:ring-primary focus:border-primary",
+                    }}
                   >
                     <SelectItem key="all">All Entry Statuses</SelectItem>
                     <SelectItem key="EXPECTED">Expected</SelectItem>
@@ -780,11 +792,15 @@ export default function FileUploadPage() {
                     }
                     onSelectionChange={(keys) =>
                       setEntriesReconStatusFilter(
-                        (Array.from(keys)[0] as string) || "all"
+                        (Array.from(keys)[0] as string) || "all",
                       )
                     }
                     className="w-56"
                     size="sm"
+                    classNames={{
+                      trigger:
+                        "focus:ring-2 focus:ring-primary focus:border-primary",
+                    }}
                   >
                     <SelectItem key="all">All Recon Statuses</SelectItem>
                     <SelectItem key="EXPECTED">Expected</SelectItem>
@@ -984,7 +1000,7 @@ export default function FileUploadPage() {
                               </TableCell>
                               <TableCell className="align-middle">
                                 {new Date(
-                                  entry.effective_date
+                                  entry.effective_date,
                                 ).toLocaleString()}
                               </TableCell>
                               <TableCell className="align-middle">

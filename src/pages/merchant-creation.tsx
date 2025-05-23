@@ -173,7 +173,7 @@ export default function MerchantManagementPage() {
             variants={fadeInUp}
             custom={1}
             className={clsx(
-              title({ size: "md", color: "blue" }),
+              title({ size: "md", color: "primary" }), // Changed color to "primary"
               "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
@@ -220,7 +220,8 @@ export default function MerchantManagementPage() {
                         }}
                         classNames={{
                           input: "text-base",
-                          inputWrapper: "h-10 sm:h-12",
+                          inputWrapper:
+                            "h-10 sm:h-12 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
                         }}
                         autoFocus
                         data-testid="merchant-name-input"
@@ -274,7 +275,11 @@ export default function MerchantManagementPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full sm:max-w-xs"
-                classNames={{ input: "text-sm", inputWrapper: "h-9" }}
+                classNames={{
+                  input: "text-sm",
+                  inputWrapper:
+                    "h-9 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
+                }}
                 data-testid="search-input"
               />
             </motion.div>
@@ -417,6 +422,10 @@ export default function MerchantManagementPage() {
               required
               autoFocus
               data-testid="edit-name-input"
+              classNames={{
+                inputWrapper:
+                  "focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
+              }}
             />
           </ModalBody>
           <ModalFooter>

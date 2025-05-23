@@ -181,7 +181,7 @@ export default function IndexPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <h1 className={clsx(title({ size: "md", color: "blue" }))}>
+          <h1 className={clsx(title({ size: "md", color: "primary" }))}>
             Accounting & Reconciliation Tool
           </h1>
           <p className={subtitle()}>

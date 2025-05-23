@@ -10,7 +10,19 @@ export default {
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: "rgb(var(--color-primary-rgb) / <alpha-value>)",
+        "primary-focus": "rgb(var(--color-primary-focus-rgb) / <alpha-value>)",
+        "primary-content":
+          "rgb(var(--color-primary-content-rgb) / <alpha-value>)",
+      },
+    },
+    ringColor: ({ theme }) => ({
+      // Added ringColor configuration
+      DEFAULT: theme("colors.primary"),
+      primary: theme("colors.primary"),
+    }),
   },
   darkMode: "class",
   plugins: [heroui()],

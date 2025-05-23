@@ -40,7 +40,7 @@ function CheckIcon(props: ComponentProps<"svg">) {
 const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
   (
     {
-      color = "primary",
+      // color prop is no longer used directly for styling, theming handles it
       steps = [],
       defaultStep = 0,
       onStepChange,
@@ -50,64 +50,16 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [currentStep, setCurrentStep] = useControlledState(
       currentStepProp,
       defaultStep,
-      onStepChange
+      onStepChange,
     );
 
-    const colors = React.useMemo(() => {
-      let userColor;
-      let fgColor;
-      const colorsVars = [
-        "[--active-fg-color:var(--step-fg-color)]",
-        "[--active-border-color:var(--step-color)]",
-        "[--active-color:var(--step-color)]",
-        "[--complete-background-color:var(--step-color)]",
-        "[--complete-border-color:var(--step-color)]",
-        "[--inactive-border-color:hsl(var(--heroui-default-300))]",
-        "[--inactive-color:hsl(var(--heroui-default-300))]",
-      ];
-      switch (color) {
-        case "primary":
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
-          break;
-        case "secondary":
-          userColor = "[--step-color:hsl(var(--heroui-secondary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-secondary-foreground))]";
-          break;
-        case "success":
-          userColor = "[--step-color:hsl(var(--heroui-success))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-success-foreground))]";
-          break;
-        case "warning":
-          userColor = "[--step-color:hsl(var(--heroui-warning))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-warning-foreground))]";
-          break;
-        case "danger":
-          userColor = "[--step-color:hsl(var(--heroui-error))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-error-foreground))]";
-          break;
-        case "default":
-          userColor = "[--step-color:hsl(var(--heroui-default))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-default-foreground))]";
-          break;
-        default:
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
-          break;
-      }
-      if (!className?.includes("--step-fg-color")) colorsVars.unshift(fgColor);
-      if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
-      if (!className?.includes("--inactive-bar-color"))
-        colorsVars.push(
-          "[--inactive-bar-color:hsl(var(--heroui-default-300))]"
-        );
-      return colorsVars;
-    }, [color, className]);
+    // Removed the complex 'colors' useMemo hook. Styling will be done via Tailwind classes
+    // that use CSS variables set by ColorThemeContext.
 
     return (
       <div className="flex items-center gap-x-4 w-2/3">
@@ -118,8 +70,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
           <ol
             className={cn(
               "flex flex-row flex-nowrap gap-x-12",
-              colors,
-              className
+              className, // Removed 'colors' variable from here
             )}
           >
             {steps?.map((step, stepIdx) => {
@@ -135,7 +86,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                   key={stepIdx}
                   className={cn(
                     "relative flex items-center",
-                    !isLastStep && "pr-12"
+                    !isLastStep && "pr-12",
                   )}
                 >
                   <button
@@ -144,7 +95,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                     aria-current={status === "active" ? "step" : undefined}
                     className={cn(
                       "group flex cursor-pointer flex-col items-center justify-center gap-y-2 rounded-large py-2.5",
-                      stepClassName
+                      stepClassName,
                     )}
                     onClick={() => setCurrentStep(stepIdx)}
                     {...props}
@@ -155,31 +106,32 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                           <m.div
                             className={cn(
                               "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold text-default-foreground",
-                              { "shadow-lg": status === "complete" }
+                              { "shadow-lg": status === "complete" },
                             )}
                             initial={false}
                             transition={{ duration: 0.25 }}
                             variants={{
                               inactive: {
+                                // Use Tailwind classes with CSS variables
                                 backgroundColor: "transparent",
-                                borderColor: "var(--inactive-border-color)",
-                                color: "var(--inactive-color)",
+                                borderColor: "hsl(var(--heroui-default-300))", // Keep inactive border standard
+                                color: "hsl(var(--heroui-default-300))", // Keep inactive text standard
                               },
                               active: {
                                 backgroundColor: "transparent",
-                                borderColor: "var(--active-border-color)",
-                                color: "var(--active-color)",
+                                borderColor: "rgb(var(--color-primary-rgb))",
+                                color: "rgb(var(--color-primary-rgb))",
                               },
                               complete: {
                                 backgroundColor:
-                                  "var(--complete-background-color)",
-                                borderColor: "var(--complete-border-color)",
+                                  "rgb(var(--color-primary-rgb))",
+                                borderColor: "rgb(var(--color-primary-rgb))",
                               },
                             }}
                           >
                             <div className="flex items-center justify-center">
                               {status === "complete" ? (
-                                <CheckIcon className="h-6 w-6 text-[var(--active-fg-color)]" />
+                                <CheckIcon className="h-6 w-6 text-primary-content" /> // Use themed text color
                               ) : (
                                 <span>{stepIdx + 1}</span>
                               )}
@@ -191,8 +143,11 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                     <div className="max-w-[120px] text-center">
                       <div
                         className={cn(
-                          "text-small font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-medium whitespace-nowrap",
-                          { "text-default-500": status === "inactive" }
+                          "text-small font-medium transition-[color,opacity] duration-300 group-active:opacity-80 lg:text-medium whitespace-nowrap",
+                          status === "active"
+                            ? "text-primary"
+                            : "text-default-foreground", // Active text is primary, others default
+                          { "text-default-500": status === "inactive" },
                         )}
                       >
                         {step.title}
@@ -206,9 +161,9 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
                       >
                         <div
                           className={cn(
-                            "relative h-0.5 w-full bg-[var(--inactive-bar-color)] transition-colors duration-300",
-                            "after:absolute after:block after:h-full after:w-0 after:bg-[var(--active-border-color)] after:transition-[width] after:duration-300 after:content-['']",
-                            { "after:w-full": stepIdx < currentStep }
+                            "relative h-0.5 w-full bg-default-300 transition-colors duration-300", // Inactive bar color
+                            "after:absolute after:block after:h-full after:w-0 after:bg-primary after:transition-[width] after:duration-300 after:content-['']", // Active bar uses bg-primary
+                            { "after:w-full": stepIdx < currentStep },
                           )}
                         />
                       </div>
@@ -221,7 +176,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
         </nav>
       </div>
     );
-  }
+  },
 );
 
 RowSteps.displayName = "RowSteps";

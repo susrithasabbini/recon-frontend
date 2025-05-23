@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --color-primary-rgb: 59 130 246; /* Default: blue-500 */
+  --color-primary-focus-rgb: 37 99 235; /* Default: blue-600 */
+  --color-primary-content-rgb: 255 255 255; /* Default: white */
+}

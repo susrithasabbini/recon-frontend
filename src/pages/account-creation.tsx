@@ -270,7 +270,7 @@ export default function AccountManagementPage() {
             variants={fadeInUp}
             custom={1}
             className={clsx(
-              title({ size: "md", color: "blue" }),
+              title({ size: "md", color: "primary" }), // Changed color to "primary"
               "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
@@ -317,7 +317,8 @@ export default function AccountManagementPage() {
                         }}
                         classNames={{
                           input: "text-base",
-                          inputWrapper: "h-10 sm:h-12",
+                          inputWrapper:
+                            "h-10 sm:h-12 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
                         }}
                         autoFocus
                         data-testid="account-name-input"
@@ -342,6 +343,10 @@ export default function AccountManagementPage() {
                       disallowEmptySelection
                       className="w-full"
                       data-testid="account-type-select"
+                      classNames={{
+                        trigger:
+                          "focus:ring-2 focus:ring-primary focus:border-primary",
+                      }}
                     >
                       <SelectItem key="DEBIT_NORMAL">Debit</SelectItem>
                       <SelectItem key="CREDIT_NORMAL">Credit</SelectItem>
@@ -353,6 +358,10 @@ export default function AccountManagementPage() {
                       disallowEmptySelection
                       className="w-full"
                       data-testid="currency-select"
+                      classNames={{
+                        trigger:
+                          "focus:ring-2 focus:ring-primary focus:border-primary",
+                      }}
                     >
                       <SelectItem key="USD">USD</SelectItem>
                       <SelectItem key="EUR">EUR</SelectItem>
@@ -397,7 +406,11 @@ export default function AccountManagementPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full sm:max-w-xs"
-                classNames={{ input: "text-sm", inputWrapper: "h-9" }}
+                classNames={{
+                  input: "text-sm",
+                  inputWrapper:
+                    "h-9 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
+                }}
                 data-testid="search-input"
               />
             </motion.div>
@@ -609,6 +622,10 @@ export default function AccountManagementPage() {
               required
               autoFocus
               data-testid="edit-name-input"
+              classNames={{
+                inputWrapper:
+                  "focus-within:ring-2 focus-within:ring-primary focus-within:border-primary",
+              }}
             />
           </ModalBody>
           <ModalFooter>
