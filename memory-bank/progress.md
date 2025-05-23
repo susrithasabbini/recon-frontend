@@ -2,94 +2,79 @@
 
 ## 2025-05-22
 
-### Task: Refactor TypeScript Types
+### Task: Implement Dynamic Color Theming and Apply to Components
+
 - **Status**: Completed
 - **Summary**:
-    - Identified all inline TypeScript type and interface definitions in `src/pages` and `src/components`.
-    - Created new domain-specific type definition files under `src/types/`:
-        - `common.types.ts`
-        - `merchant.types.ts`
-        - `account.types.ts`
-        - `rule.types.ts`
-        - `file.types.ts`
-    - Populated these files with the identified types, ensuring consistency (e.g., `UploadResponse` type usage).
-    - Updated `src/types/index.ts` to act as a barrel file, re-exporting all types from the new domain-specific files.
-    - Refactored all relevant `.tsx` files in `src/pages` and `src/components` to remove inline type definitions and import them from `@/types` via the barrel file.
-    - Corrected type definitions in `common.types.ts` for `ThemeSwitchProps`, `NavigationButtonsProps`, and `RowStepsProps` to match actual component usage after initial refactoring attempts highlighted discrepancies.
-- **Files Modified**:
-    - `src/types/common.types.ts` (created and updated)
-    - `src/types/merchant.types.ts` (created)
-    - `src/types/account.types.ts` (created)
-    - `src/types/rule.types.ts` (created)
-    - `src/types/file.types.ts` (created)
-    - `src/types/index.ts` (updated)
-    - `src/pages/merchant-creation.tsx` (refactored)
-    - `src/pages/account-creation.tsx` (refactored)
-    - `src/pages/rules-mapping.tsx` (refactored)
-    - `src/pages/file-upload.tsx` (refactored, type usage corrected)
-    - `src/components/theme-switch.tsx` (refactored)
-    - `src/components/NavigationButtons.tsx` (refactored)
-    - `src/components/RowSteps.tsx` (refactored)
-    - `src/components/merchant-select.tsx` (refactored)
-    - `src/components/FileUploadForm.tsx` (refactored, type usage corrected)
-    - `memory-bank/systemPatterns.md` (updated)
-    - `memory-bank/activeContext.md` (updated)
-    - `memory-bank/progress.md` (this entry)
+  - Implemented a dynamic color theming system allowing users to select a primary color scheme (blue, red, pink, etc.) from a navbar dropdown.
+  - Created `src/config/colorThemes.ts` to define theme palettes (primary, focus, content colors).
+  - Added CSS custom properties (e.g., `--color-primary-rgb`) to `src/styles/globals.css`, using space-separated RGB values for Tailwind compatibility.
+  - Updated `tailwind.config.js` to use these CSS variables for its `primary`, `primary-focus`, and `primary-content` color definitions, and also configured the default `ringColor` to use the theme's primary color.
+  - Created `src/contexts/ColorThemeContext.tsx` with a provider to manage the active theme, apply it by setting CSS variables on the root element, and persist the choice to localStorage. The `hexToRgb` utility was updated to output space-separated values.
+  - Developed `src/components/ColorThemeSelector.tsx`, a dropdown component using HeroUI `Select` for theme selection.
+  - Integrated `ColorThemeSelector` into `src/components/navbar.tsx`.
+  - Wrapped the main application in `src/App.tsx` with `ColorThemeProvider`.
+  - Refactored `src/components/row-steps.tsx` to remove its internal color prop logic and instead use the new theme-aware CSS variables and Tailwind classes (`text-primary`, `bg-primary`, `text-primary-content`).
+  - Updated the `title` primitive in `src/components/primitives.ts` to add a `primary` color variant (using `text-primary`) and ensured it doesn't conflict with gradient styles.
+  - Updated page titles in `src/pages/merchant-creation.tsx`, `src/pages/account-creation.tsx`, `src/pages/rules-mapping.tsx`, and `src/pages/file-upload.tsx` to use `title({ color: "primary" })` so they reflect the selected theme.
+  - Applied themed focus ring styles to `Input` and `Select` components across `merchant-creation.tsx`, `account-creation.tsx`, `rules-mapping.tsx`, `file-upload.tsx`, and `file-upload-form.tsx` using the `classNames` prop.
+- **Files Created/Modified**:
+  - `src/config/colorThemes.ts` (created)
+  - `src/styles/globals.css` (updated)
+  - `tailwind.config.js` (updated with ringColor)
+  - `src/contexts/ColorThemeContext.tsx` (created, updated)
+  - `src/components/ColorThemeSelector.tsx` (created, updated)
+  - `src/components/navbar.tsx` (updated)
+  - `src/App.tsx` (updated)
+  - `src/components/row-steps.tsx` (updated)
+  - `src/components/primitives.ts` (updated)
+  - `src/pages/merchant-creation.tsx` (updated for title and input focus)
+  - `src/pages/account-creation.tsx` (updated for title and input/select focus)
+  - `src/pages/rules-mapping.tsx` (updated for title and select focus)
+  - `src/pages/file-upload.tsx` (updated for title and select focus)
+  - `src/components/file-upload-form.tsx` (updated for select focus)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+  - `memory-bank/systemPatterns.md` (to be updated)
+  - `memory-bank/techContext.md` (to be updated)
 - **Issues Encountered**:
-    - Initial `replace_in_file` attempts for `src/components/theme-switch.tsx` and `src/components/RowSteps.tsx` failed due to outdated SEARCH blocks. Re-reading the files and adjusting the SEARCH blocks resolved this.
-    - Discrepancies were found between the initially defined props in `common.types.ts` for `ThemeSwitchProps`, `NavigationButtonsProps`, and `RowStepsProps` versus their actual usage in the components. These were corrected in `common.types.ts`.
-    - Type mismatch for `UploadResponse` and its usage in `uploadStatus` state in `file-upload.tsx` and `FileUploadForm.tsx` was identified and corrected.
+  - Initial import errors for `colorThemes.ts` due to incorrect path assumptions and possibly TS server caching. Resolved by ensuring file creation and using correct alias.
+  - `SelectItem` prop issue in `ColorThemeSelector` (removed `value` prop).
+  - Buttons appeared transparent after Tailwind config update; resolved by changing CSS variable values and `hexToRgb` output to space-separated RGB values.
+  - `title` primitive in `merchant-creation.tsx` (and other pages) caused a TS error when `color: "primary"` was used; resolved by updating the `title` primitive definition in `primitives.ts`.
+  - Input focus rings remained blue; initially attempted to fix with `tailwind.config.js` `ringColor` default, then further addressed by applying specific `focus-within:ring-primary` and `focus:ring-primary` classes to `Input` and `Select` components via `classNames` prop.
+
+---
+
+### Task: Refactor TypeScript Types
+
+- **Status**: Completed
+- **Summary**:
+  - Identified all inline TypeScript type and interface definitions in `src/pages` and `src/components`.
+  - Created new domain-specific type definition files under `src/types/`.
+  - Populated these files with the identified types, ensuring consistency.
+  - Updated `src/types/index.ts` to act as a barrel file.
+  - Refactored all relevant `.tsx` files in `src/pages` and `src/components` to import types from `@/types`.
+- **Files Modified**:
+  - `src/types/common.types.ts`, `merchant.types.ts`, `account.types.ts`, `rule.types.ts`, `file.types.ts` (created)
+  - `src/types/index.ts` (updated)
+  - Various pages and components (refactored)
+  - `memory-bank/systemPatterns.md` (updated)
+  - `memory-bank/activeContext.md` (updated)
 
 ---
 
 ### Task: Comprehensive Memory Bank Update
+
 - **Status**: Completed
 - **Summary**:
-    - Conducted a full review of all files in `src/pages/`.
-    - Created or updated page-specific Memory Bank documents for:
-        - `account-creation.tsx` (reviewed, re-saved)
-        - `file-upload.tsx` (significantly updated)
-        - `home.tsx` (newly created)
-        - `index.tsx` (newly created as `index-page-component.md`, identified as a component)
-        - `MainProcessFlowPage.tsx` (newly created)
-        - `merchant-creation.tsx` (newly created)
-        - `rules-mapping.tsx` (reviewed, re-saved)
-    - Updated global Memory Bank files:
-        - `systemPatterns.md`: Added new patterns (Two-Column CRUD, Complex Filtering, Wizard/Stepper, Page Composition, Polling) and refined API interaction details.
-        - `productContext.md`: Added specific examples to reinforce UX expectations.
-    - `techContext.md` was reviewed, but no changes were deemed necessary for this task.
-- **Files Modified**:
-    - `memory-bank/account-creation.md`
-    - `memory-bank/file-upload.md`
-    - `memory-bank/home.md`
-    - `memory-bank/index-page-component.md`
-    - `memory-bank/MainProcessFlowPage.md`
-    - `memory-bank/merchant-creation.md`
-    - `memory-bank/rules-mapping.md`
-    - `memory-bank/systemPatterns.md`
-    - `memory-bank/productContext.md`
-    - `memory-bank/activeContext.md` (updated with task completion details)
-    - `memory-bank/progress.md` (this entry)
-- **Issues Encountered**:
-    - Some page-specific Memory Bank files were missing and had to be created.
-    - `memory-bank/file-upload.md` was significantly outdated.
-    - `src/pages/index.tsx` was identified as a component/section, not a standalone page, requiring a differently named MB doc (`index-page-component.md`).
+  - Full review of `src/pages/`. Created/updated page-specific and global Memory Bank documents.
+- **Files Modified**: Multiple `memory-bank/*.md` files.
 
 ---
 
 ### Task: Add filter for non-archived transactions in the processed entries
+
 - **Status**: Completed
-- **Summary**:
-    - Successfully added a new filter to the "Processed Entries" table in `src/pages/file-upload.tsx`.
-    - The filter is a `Switch` component labeled "Exclude Archived" which defaults to ON (hiding archived transactions).
-    - Implemented logic to allow the "Recon Status" dropdown to override the switch if "ARCHIVED" is explicitly selected.
-    - Added a new state variable `excludeArchivedTransactions` and updated relevant hooks.
-    - Resolved an import error for the `Switch` component.
-    - User confirmed the functionality is working as expected.
-- **Files Modified**:
-    - `src/pages/file-upload.tsx`
-    - `memory-bank/plans/2025-05-22-plan.md` (all steps completed)
-    - `memory-bank/activeContext.md` (updated with task completion details)
-- **Issues Encountered**:
-    - Initial `EROFS: read-only file system` error when trying to write to `/memory-bank/` (resolved by using relative path `memory-bank/`).
-    - TypeScript error for `Switch` import path (resolved by changing from `@heroui/react` to `@heroui/switch`).
+- **Summary**: Added "Exclude Archived" switch to `file-upload.tsx`.
+- **Files Modified**: `src/pages/file-upload.tsx`, plan files, context files.

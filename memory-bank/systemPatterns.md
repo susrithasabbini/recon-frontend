@@ -8,7 +8,7 @@
 - **Routing:** React Router DOM (`react-router-dom`) handles client-side routing, enabling navigation between different pages like Account Management, File Upload, and Rules Mapping.
 - **State Management:**
   - **Local Component State:** React `useState` and `useMemo` hooks are used for managing state within individual components (e.g., form inputs, loading flags, filtered data).
-  - **Shared Context:** React Context API (`useDefaultContext`) is employed for managing global or shared state, such as the `selectedMerchant` ID, and providing access to shared functions like `getAccounts`, `createAccount`.
+  - **Shared Context:** React Context API (`useDefaultContext`, `useColorTheme`) is employed for managing global or shared state. This includes `selectedMerchant` ID, shared data functions, and the active color theme.
 - **API Interaction:** Axios is configured for making HTTP requests to the backend API. A base instance (`@/config/axios`) is likely set up with default configurations (e.g., base URL, headers).
 - **Animations:** Framer Motion is used for UI animations, enhancing user experience with smooth transitions and visual feedback (e.g., `fadeInUp`, `scaleIn` variants).
 - **Notifications:** A toast notification system (`@heroui/toast`) is used to provide users with feedback on operations (e.g., success or failure of creating an account).
@@ -34,14 +34,22 @@
 - **Merchant Context:** The application heavily relies on a `selectedMerchant` context. Most functionalities are scoped to the selected merchant, and UI elements are often disabled or show prompts if no merchant is selected.
 - **Wizard/Stepper Pattern:** The `MainProcessFlowPage.tsx` implements a wizard/stepper UI to guide users through a sequence of operations (Merchant Creation → Account Creation → Rules Mapping → File Upload).
 - **Page Composition:** The `MainProcessFlowPage.tsx` composes other full-page components (`MerchantManagementPage`, `AccountCreationPage`, etc.) into its steps, demonstrating a modular approach where pages can be used standalone or as part of a guided flow.
+- **Dynamic Color Theming:**
+  - A `ColorThemeContext` (`src/contexts/ColorThemeContext.tsx`) manages the active color theme (e.g., blue, red, green).
+  - Theme definitions (color palettes) are stored in `src/config/colorThemes.ts`.
+  - On theme change, CSS custom properties (e.g., `--color-primary-rgb`) are updated on the root HTML element. These properties store space-separated RGB values.
+  - Tailwind CSS (`tailwind.config.js`) is configured to use these CSS variables for its semantic colors (e.g., `primary: "rgb(var(--color-primary-rgb) / <alpha-value>)"`) and its default `ringColor`.
+  - A `ColorThemeSelector` component in the navbar allows users to switch themes.
+  - The selected theme is persisted in `localStorage`.
+  - Components like `RowSteps` and page titles (using the `title` primitive) have been updated to utilize these theme-aware primary colors.
 
 ## Code Structure (Illustrative based on provided files)
 
 ```
 src/
 ├── components/         # Reusable UI components (icons, primitives, etc.)
-├── config/             # Application configuration (axios, site settings)
-├── contexts/           # React Context providers (e.g., DefaultReconProvider)
+├── config/             # Application configuration (axios, site settings, colorThemes.ts)
+├── contexts/           # React Context providers (e.g., DefaultReconProvider, ColorThemeProvider)
 ├── layouts/            # Layout components (e.g., DefaultLayout)
 ├── pages/              # Page-level components (AccountCreationPage, FileUploadPage). Note: `src/pages/index.tsx` appears to be a component/section rather than a standalone page.
 ├── styles/             # Global styles

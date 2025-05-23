@@ -7,14 +7,15 @@
 - **Build Tool/Bundler:** Vite (as indicated by `vite.config.ts`, `vite.svg`, `vite-env.d.ts`)
 - **Package Manager:** npm (as indicated by `package.json`, `package-lock.json`)
 - **Styling:**
-  - Tailwind CSS (configured in `tailwind.config.js`, `postcss.config.js`)
-  - CSS Modules or global CSS (`src/styles/globals.css`)
+  - Tailwind CSS (configured in `tailwind.config.js`, `postcss.config.js`). Extended with CSS custom properties (e.g., `--color-primary-rgb`) defined in `src/styles/globals.css` for dynamic primary color theming. Default `ringColor` also configured to use themed primary color.
+  - Global CSS (`src/styles/globals.css`) for base styles and CSS variable definitions.
 - **UI Component Library:** HeroUI (`@heroui/react` and specific component packages like `@heroui/input`, `@heroui/button`, `@heroui/select`, `@heroui/card`, `@heroui/table`, `@heroui/modal`, `@heroui/tooltip`, `@heroui/toast`, `@heroui/pagination`)
 - **Icons:** Heroicons (`@heroicons/react/24/outline`)
 - **Routing:** React Router DOM (`react-router-dom`)
 - **State Management:**
   - React Hooks (`useState`, `useEffect`, `useMemo`, `useContext`)
-  - React Context API for shared state.
+  - React Context API for shared state (e.g., `DefaultReconProvider`, `ColorThemeProvider`).
+  - Dynamic color theming managed via `ColorThemeContext`, updating CSS custom properties.
 - **Animations:** Framer Motion (`framer-motion`)
 - **HTTP Client:** Axios (`axios`)
 - **Linting/Formatting:**
