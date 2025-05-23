@@ -1,6 +1,6 @@
 import React from "react";
 import { Select, SelectItem } from "@heroui/select";
-import { useColorTheme } from "@/contexts/ColorThemeContext";
+import { useColorTheme } from "@/contexts/color-theme-context";
 import { SwatchIcon } from "@heroicons/react/24/outline";
 
 export const ColorThemeSelector: React.FC = () => {
