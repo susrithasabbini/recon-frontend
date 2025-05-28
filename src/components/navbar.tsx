@@ -37,11 +37,7 @@ export const Navbar = () => {
         <NavbarItem>
           <ThemeSwitch />
         </NavbarItem>
-        {isProcessFlow && (
-          <NavbarItem>
-            <MerchantSelect className="w-48" />
-          </NavbarItem>
-        )}
+        {/* MerchantSelect removed for /process-flow as per user request */}
       </NavbarContent>
     </HeroUINavbar>
   );

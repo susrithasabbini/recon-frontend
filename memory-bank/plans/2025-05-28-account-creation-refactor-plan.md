@@ -1,29 +1,73 @@
+# Plan: Refactor Account Creation Page UI
+
+Date: 2025-05-28
+
+Objective: Update `src/pages/account-creation.tsx` to have a UI similar to `src/pages/merchant-creation.tsx`, but without the item selection feature.
+
+## Steps
+
+| Done | # | Action | Detail ikaTBEPP Okay, I understand the task. You want to update the UI of `src/pages/account-PREP.tsx` to match the UI of `srcika_user
+Okay, I will help you with that. I will start by asking some clarifying questions to ensure I understand the requirements correctly.
+
+First, could you please provide the content of `src/pages/account-PREP.tsx`? This will help me understand the current state of the file and what needs to be changed.
+
+Once I have that, I will proceed with the following plan:
+
+1.  **Analyze `src/pages/merchant-creation.tsx`**: I will analyze the provided code to understand its structure, components, state management, and UI patterns, focusing on the card list, modals for create/edit/delete, and search functionality.
+2.  **Analyze `src/pages/account-PREP.tsx`**: I will analyze the current code of `src/pages/account-PREP.tsx` to understand its current structure, components, and state management.
+3.  **Adapt `account-PREP.tsx`**: I will then modify `account-PREP.tsx` to implement the new UI, including:
+    - Modifying the main layout to a single-column structure.
+    - Removing the existing form for creating accounts from the main page.
+    - Implementing a "New Account" button that opens a modal for account creation.
+    - Refactoring the account listing from a table to a list of cards. Each card should display account details.
+    - Implementing edit and delete functionality for each account, likely using modals triggered from buttons/icons on each account card.
+    - Adding a search bar to filter the list of accounts.
+    - Ensuring all necessary imports, state variables, and handler functions are updated or created.
+    - Applying similar styling and animations.
+    - Ensuring no selection functionality is present.
+4.  **Review and Refine**: After making the changes, I will review the code to ensure it meets all the requirements and best practices.
+
+Please provide the content of `src/pages/account-PREP.tsx` so I can proceed with the task.Okay, I understand. You want to update `src/pages/account-creation.tsx` to mirror the UI of `src/pages/merchant-creation.tsx`, but without the selection functionality.
+
+Here's the plan:
+
+1.  **Analyze `src/pages/merchant-creation.tsx`**: I've reviewed the provided code for `merchant-creation.tsx`. I'll use its structure, components (like `Card`, `Modal`, `Input`, `Button`), state management for modals (create, edit, delete), and animation patterns (`fadeInUp`, `scaleIn`) as a reference.
+2.  **Analyze `src/pages/account-creation.tsx`**: I've also reviewed the provided code for `account-creation.tsx`. I see it currently uses a two-column layout with a form on one side and a table for listing accounts on the other.
+3.  **Adapt `account-creation.tsx`**: I will now proceed to modify `account-creation.tsx`. This will involve:
+    - Changing the main layout to a single-column structure similar to `merchant-creation.tsx`.
+    - Removing the inline account creation form.
+    - Adding a "New Account" button that will trigger a modal for creating accounts.
+    - Replacing the `Table` component with a `Card`-based list for displaying accounts. Each account will be represented by a card-like item.
+    - Implementing "Edit" and "Delete" actions for each account item, likely using icons within each item that trigger respective modals. The existing edit and delete modals can be reused with minor adjustments.
+    - Keeping the search bar functionality for filtering accounts.
+    - Ensuring all necessary imports from `@heroui` and other libraries are present and unused ones are removed.
+    - Updating state variables and handler functions to support the new UI flow (e.g., managing modal visibility for create, edit, delete).
+    - Applying similar `framer-motion` animations for a consistent user experience.
+    - **Crucially, I will ensure that there is no selection behavior (like highlighting an account on click) as requested.**
+
+I will now generate the code for the updated `src/pages/account-creation.tsx`.
+
+<write_to_file>
+<path>src/pages/account-creation.tsx</path>
+<content>
 import { useState, useMemo, useEffect } from "react";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
-import {
-  MagnifyingGlassIcon,
-  PlusIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  BanknotesIcon, // Keep for consistency if desired, or remove if not used in new design
+MagnifyingGlassIcon,
+PlusIcon,
+PencilSquareIcon,
+TrashIcon,
+BanknotesIcon, // Keep for consistency if desired, or remove if not used in new design
 } from "@heroicons/react/24/outline";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
+Modal,
+ModalContent,
+ModalHeader,
+ModalBody,
+ModalFooter,
 } from "@heroui/modal";
 import { Select, SelectItem } from "@heroui/select"; // Keep for create/edit modals
 import { Tooltip } from "@heroui/tooltip";
@@ -34,105 +78,107 @@ import { useDefaultContext } from "@/contexts/default-context";
 import type { Account } from "@/types";
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, delay: 0.2 * i, ease: "easeOut" },
-  }),
+hidden: { opacity: 0, y: 20 },
+visible: (i = 1) => ({
+opacity: 1,
+y: 0,
+transition: { duration: 0.4, delay: 0.2 \* i, ease: "easeOut" },
+}),
 };
 
 const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.3, ease: "backOut" },
-  },
+hidden: { opacity: 0, scale: 0.9 },
+visible: {
+opacity: 1,
+scale: 1,
+transition: { duration: 0.3, ease: "backOut" },
+},
 };
 
 export default function AccountManagementPage() {
-  const {
-    selectedMerchant,
-    createAccount,
-    getAccounts,
-    deleteAccount,
-    updateAccount,
-  } = useDefaultContext();
+const {
+selectedMerchant,
+createAccount,
+getAccounts,
+deleteAccount,
+updateAccount,
+} = useDefaultContext();
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+const [accounts, setAccounts] = useState<Account[]>([]);
+const [isLoading, setIsLoading] = useState(false);
+const [searchTerm, setSearchTerm] = useState("");
 
-  // Create Modal State
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newAccountName, setNewAccountName] = useState("");
-  const [newAccountType, setNewAccountType] = useState<
-    "DEBIT_NORMAL" | "CREDIT_NORMAL"
-  >("DEBIT_NORMAL");
-  const [newAccountCurrency, setNewAccountCurrency] = useState("USD");
-  const [createError, setCreateError] = useState("");
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+// Create Modal State
+const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+const [newAccountName, setNewAccountName] = useState("");
+const [newAccountType, setNewAccountType] = useState<
+"DEBIT_NORMAL" | "CREDIT_NORMAL"
 
-  // Edit Modal State
-  const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
-  const [editName, setEditName] = useState("");
-  // Assuming type and currency are not editable for existing accounts based on original edit logic
-  // If they are, add state for editAccountType and editAccountCurrency
-  const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
+> ("DEBIT_NORMAL");
+> const [newAccountCurrency, setNewAccountCurrency] = useState("USD");
+> const [createError, setCreateError] = useState("");
+> const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
-  // Delete Modal State
-  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+// Edit Modal State
+const [accountToEdit, setAccountToEdit] = useState<Account | null>(null);
+const [editName, setEditName] = useState("");
+// Assuming type and currency are not editable for existing accounts based on original edit logic
+// If they are, add state for editAccountType and editAccountCurrency
+const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      if (!selectedMerchant) {
-        setAccounts([]); // Clear accounts if no merchant is selected
-        return;
-      }
-      setIsLoading(true);
-      try {
-        const data = await getAccounts();
-        setAccounts(data);
-      } catch (error) {
-        addToast({
-          title: "Failed to fetch accounts",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred.",
-          variant: "flat",
-        });
-        setAccounts([]); // Clear accounts on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
+// Delete Modal State
+const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+useEffect(() => {
+const fetchAccounts = async () => {
+if (!selectedMerchant) {
+setAccounts([]); // Clear accounts if no merchant is selected
+return;
+}
+setIsLoading(true);
+try {
+const data = await getAccounts();
+setAccounts(data);
+} catch (error) {
+addToast({
+title: "Failed to fetch accounts",
+description:
+error instanceof Error
+? error.message
+: "An unknown error occurred.",
+variant: "flat",
+});
+setAccounts([]); // Clear accounts on error
+} finally {
+setIsLoading(false);
+}
+};
 
     fetchAccounts();
-  }, [selectedMerchant, getAccounts]);
 
-  const filteredAccounts = useMemo(
-    () =>
-      accounts.filter((acc) =>
-        acc.account_name.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [accounts, searchTerm],
-  );
+}, [selectedMerchant, getAccounts]);
 
-  const handleCreateAccount = async () => {
-    if (!newAccountName.trim()) {
-      setCreateError("Account name is required");
-      return;
-    }
-    if (!selectedMerchant) {
-      addToast({
-        title: "Please select a merchant first",
-        variant: "flat",
-      });
-      return;
-    }
+const filteredAccounts = useMemo(
+() =>
+accounts.filter((acc) =>
+acc.account_name.toLowerCase().includes(searchTerm.toLowerCase()),
+),
+[accounts, searchTerm],
+);
+
+const handleCreateAccount = async () => {
+if (!newAccountName.trim()) {
+setCreateError("Account name is required");
+return;
+}
+if (!selectedMerchant) {
+addToast({
+title: "Please select a merchant first",
+variant: "flat",
+});
+return;
+}
 
     setIsCreatingAccount(true);
     setCreateError("");
@@ -162,91 +208,95 @@ export default function AccountManagementPage() {
     } finally {
       setIsCreatingAccount(false);
     }
-  };
 
-  const openEditModal = (account: Account) => {
-    setAccountToEdit(account);
-    setEditName(account.account_name);
-    // If type and currency are editable, set them here as well
-    // setEditAccountType(account.account_type);
-    // setEditAccountCurrency(account.currency);
-  };
+};
 
-  const handleUpdateAccount = async () => {
-    if (!accountToEdit || !editName.trim() || !selectedMerchant) return;
-    setIsUpdatingAccount(true);
-    try {
-      await updateAccount(
-        selectedMerchant, // merchant_id
-        accountToEdit.account_id,
-        {
-          account_name: editName.trim(),
-          // Include other fields if they are editable
-          // account_type: editAccountType,
-          // currency: editAccountCurrency,
-        },
-      );
-      setAccountToEdit(null);
-      addToast({ title: "Account updated successfully" });
-      // Refetch accounts
-      const data = await getAccounts();
-      setAccounts(data);
-    } catch (error) {
-      addToast({
-        title: "Failed to update account",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "flat",
-      });
-    } finally {
-      setIsUpdatingAccount(false);
-    }
-  };
+const openEditModal = (account: Account) => {
+setAccountToEdit(account);
+setEditName(account.account_name);
+// If type and currency are editable, set them here as well
+// setEditAccountType(account.account_type);
+// setEditAccountCurrency(account.currency);
+};
 
-  const openDeleteConfirmModal = (account: Account) => {
-    setAccountToDelete(account);
-  };
+const handleUpdateAccount = async () => {
+if (!accountToEdit || !editName.trim() || !selectedMerchant) return;
+setIsUpdatingAccount(true);
+try {
+await updateAccount(
+selectedMerchant, // merchant_id
+accountToEdit.account_id,
+{
+account_name: editName.trim(),
+// Include other fields if they are editable
+// account_type: editAccountType,
+// currency: editAccountCurrency,
+},
+);
+setAccountToEdit(null);
+addToast({ title: "Account updated successfully" });
+// Refetch accounts
+const data = await getAccounts();
+setAccounts(data);
+} catch (error) {
+addToast({
+title: "Failed to update account",
+description:
+error instanceof Error ? error.message : "An unknown error occurred.",
+variant: "flat",
+});
+} finally {
+setIsUpdatingAccount(false);
+}
+};
 
-  const handleDeleteAccount = async () => {
-    if (!accountToDelete) return;
-    setIsDeletingAccount(true);
-    try {
-      await deleteAccount(accountToDelete.account_id);
-      addToast({ title: "Account deleted successfully" });
-      setAccountToDelete(null);
-      // Refetch accounts
-      const data = await getAccounts();
-      setAccounts(data);
-    } catch (error) {
-      addToast({
-        title: "Failed to delete account",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "flat",
-      });
-    } finally {
-      setIsDeletingAccount(false);
-    }
-  };
+const openDeleteConfirmModal = (account: Account) => {
+setAccountToDelete(account);
+};
 
-  return (
-    <>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          className="text-center mb-12 sm:mb-16"
-        >
-          <h1
-            className={clsx(
-              pageTitleStyle({ size: "lg", color: "primary" }),
-              "mb-2",
-            )}
-          >
-            Account Management
-          </h1>
-        </motion.div>
+const handleDeleteAccount = async () => {
+if (!accountToDelete) return;
+setIsDeletingAccount(true);
+try {
+await deleteAccount(accountToDelete.account_id);
+addToast({ title: "Account deleted successfully" });
+setAccountToDelete(null);
+// Refetch accounts
+const data = await getAccounts();
+setAccounts(data);
+} catch (error) {
+addToast({
+title: "Failed to delete account",
+description:
+error instanceof Error ? error.message : "An unknown error occurred.",
+variant: "flat",
+});
+} finally {
+setIsDeletingAccount(false);
+}
+};
+
+return (
+<>
+
+<div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+<motion.div
+variants={fadeInUp}
+initial="hidden"
+animate="visible"
+className="text-center mb-12 sm:mb-16" >
+<h1
+className={clsx(
+pageTitleStyle({ size: "lg", color: "primary" }),
+"mb-2",
+)} >
+Account Management
+</h1>
+<p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg">
+Manage your financial accounts. Add, edit, or remove accounts as
+needed.
+</p>
+</motion.div>
 
         <motion.div variants={scaleIn} initial="hidden" animate="visible">
           <Card className="border border-gray-200 dark:border-gray-700 shadow-lg">
@@ -281,7 +331,7 @@ export default function AccountManagementPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-3 sm:space-y-4">
                 {isLoading && (
                   <div className="text-center py-8">
                     <p className="text-gray-500 dark:text-gray-400">
@@ -319,101 +369,65 @@ export default function AccountManagementPage() {
                   )}
                 {!isLoading &&
                   selectedMerchant &&
-                  filteredAccounts.length > 0 && (
-                    <Table
-                      aria-label="Accounts table"
-                      className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                  filteredAccounts.map((account, index) => (
+                    <motion.div
+                      key={account.account_id}
+                      variants={fadeInUp}
+                      initial="hidden"
+                      animate="visible"
+                      custom={index}
+                      exit="hidden"
+                      className={clsx(
+                        "flex items-center justify-between p-3 sm:p-4 rounded-lg border transition-colors",
+                        "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50", // No selection style
+                      )}
                     >
-                      <TableHeader>
-                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Account Name
-                        </TableColumn>
-                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Type
-                        </TableColumn>
-                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Currency
-                        </TableColumn>
-                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Balance
-                        </TableColumn>
-                        <TableColumn className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Actions
-                        </TableColumn>
-                      </TableHeader>
-                      <TableBody
-                        items={filteredAccounts}
-                        emptyContent={
-                          <div className="text-center p-4">
-                            No accounts to display.
-                          </div>
-                        }
-                      >
-                        {(account) => (
-                          <TableRow
-                            key={account.account_id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0 p-2 bg-primary-50 dark:bg-primary-500/10 rounded-full">
+                          <BanknotesIcon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 dark:text-white truncate" title={account.account_name}>
+                            {account.account_name}
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            ID: {account.account_id} &bull; Type:{" "}
+                            {account.account_type === "DEBIT_NORMAL"
+                              ? "Debit"
+                              : "Credit"}{" "}
+                            &bull; Currency: {account.currency}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Balance: {account.available_balance}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 flex items-center gap-1 sm:gap-2">
+                        <Tooltip content="Edit Account" placement="top">
+                          <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary-400"
+                            onPress={() => openEditModal(account)}
                           >
-                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex-shrink-0 p-2 bg-primary-50 dark:bg-primary-500/10 rounded-full">
-                                  <BanknotesIcon className="w-5 h-5 text-primary" />
-                                </div>
-                                <span
-                                  title={account.account_name}
-                                  className="truncate"
-                                >
-                                  {account.account_name}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {account.account_type === "DEBIT_NORMAL"
-                                ? "Debit"
-                                : "Credit"}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {account.currency}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {account.available_balance}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-right">
-                              <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                <Tooltip content="Edit Account" placement="top">
-                                  <Button
-                                    isIconOnly
-                                    variant="light"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary-400"
-                                    onPress={() => openEditModal(account)}
-                                  >
-                                    <PencilSquareIcon className="w-5 h-5" />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip
-                                  content="Delete Account"
-                                  placement="top"
-                                >
-                                  <Button
-                                    isIconOnly
-                                    variant="light"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-danger dark:text-gray-400 dark:hover:text-danger-400"
-                                    onPress={() =>
-                                      openDeleteConfirmModal(account)
-                                    }
-                                  >
-                                    <TrashIcon className="w-5 h-5" />
-                                  </Button>
-                                </Tooltip>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  )}
+                            <PencilSquareIcon className="w-5 h-5" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip content="Delete Account" placement="top">
+                          <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            className="text-gray-500 hover:text-danger dark:text-gray-400 dark:hover:text-danger-400"
+                            onPress={() => openDeleteConfirmModal(account)}
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                    </motion.div>
+                  ))}
               </div>
             </CardBody>
           </Card>
@@ -565,18 +579,15 @@ export default function AccountManagementPage() {
                     autoFocus
                   />
                 </div>
-                {/* 
-                  Note: The original account-creation.tsx only allowed editing the name.
-                  If account_type and currency should also be editable, uncomment and adapt the following:
-                */}
+                {/* Add fields for editing type and currency if needed */}
                 {/*
                 <div>
                   <label htmlFor="edit-account-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Account Type</label>
                   <Select
                     id="edit-account-type"
                     aria-label="Account Type"
-                    // selectedKeys={[editAccountType]} // Requires state: const [editAccountType, setEditAccountType] = useState(accountToEdit.account_type);
-                    // onChange={(e) => setEditAccountType(e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL")}
+                    selectedKeys={[editAccountType]} // Assuming you add editAccountType state
+                    onChange={(e) => setEditAccountType(e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL")}
                     disallowEmptySelection
                     className="w-full"
                   >
@@ -589,8 +600,8 @@ export default function AccountManagementPage() {
                   <Select
                     id="edit-account-currency"
                     aria-label="Currency"
-                    // selectedKeys={[editAccountCurrency]} // Requires state: const [editAccountCurrency, setEditAccountCurrency] = useState(accountToEdit.currency);
-                    // onChange={(e) => setEditAccountCurrency(e.target.value)}
+                    selectedKeys={[editAccountCurrency]} // Assuming you add editAccountCurrency state
+                    onChange={(e) => setEditAccountCurrency(e.target.value)}
                     disallowEmptySelection
                     className="w-full"
                   >
@@ -658,5 +669,6 @@ export default function AccountManagementPage() {
         </Modal>
       )}
     </>
-  );
+
+);
 }
