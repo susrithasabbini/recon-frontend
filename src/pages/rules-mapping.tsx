@@ -205,9 +205,14 @@ export default function RulesMappingPage() {
     }
   };
 
-  // Filter available target accounts based on selected source
+  // Helper functions
   const getAvailableTargetAccounts = (sourceId: string) => {
     return accounts.filter((acc) => acc.account_id !== sourceId);
+  };
+  
+  const getAccountName = (accountId: string) => {
+    const account = accounts.find(acc => acc.account_id === accountId);
+    return account ? account.account_name : accountId;
   };
 
   const pages = Math.max(1, Math.ceil(mappings.length / rowsPerPage));
@@ -452,10 +457,10 @@ export default function RulesMappingPage() {
                           {(m) => (
                             <TableRow key={m.id}>
                               <TableCell className="whitespace-nowrap text-primary font-medium py-0.5">
-                                {m.accountOne.account_name}
+                                {m.accountOne?.account_name || getAccountName(m.account_one_id)}
                               </TableCell>
                               <TableCell className="whitespace-nowrap text-secondary font-medium py-0.5">
-                                {m.accountTwo.account_name}
+                                {m.accountTwo?.account_name || getAccountName(m.account_two_id)}
                               </TableCell>
                               <TableCell className="whitespace-nowrap text-center py-0.5">
                                 <div className="flex gap-2 justify-center">
@@ -501,11 +506,11 @@ export default function RulesMappingPage() {
             <p>
               Are you sure you want to delete the mapping between{" "}
               <span className="font-medium">
-                {mappingToDelete?.accountOne.account_name}
+                {mappingToDelete?.accountOne?.account_name || getAccountName(mappingToDelete?.account_one_id || '')}
               </span>{" "}
               and{" "}
               <span className="font-medium">
-                {mappingToDelete?.accountTwo.account_name}
+                {mappingToDelete?.accountTwo?.account_name || getAccountName(mappingToDelete?.account_two_id || '')}
               </span>
               ? This action cannot be undone.
             </p>

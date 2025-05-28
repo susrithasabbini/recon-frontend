@@ -10,9 +10,10 @@ import api from "@/config/axios";
 interface Merchant {
   merchant_id: string;
   merchant_name: string;
-  merchant_code: string;
-  status: "ACTIVE" | "INACTIVE";
+  merchant_code?: string;
+  status?: "ACTIVE" | "INACTIVE";
   created_at: string;
+  updated_at?: string;
 }
 
 interface Account {

@@ -995,7 +995,9 @@ export default function FileUploadPage() {
                                     {entry.transaction.status}
                                   </span>
                                 ) : (
-                                  "-"
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                    PENDING
+                                  </span>
                                 )}
                               </TableCell>
                               <TableCell className="align-middle">

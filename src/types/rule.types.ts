@@ -3,10 +3,11 @@ import type { AccountDetails } from "./account.types";
 
 export interface ReconRule {
   id: string;
+  merchant_id?: string;
   account_one_id: string;
   account_two_id: string;
   created_at: string;
   updated_at: string;
-  accountOne: AccountDetails;
-  accountTwo: AccountDetails;
+  accountOne?: AccountDetails;
+  accountTwo?: AccountDetails;
 }
