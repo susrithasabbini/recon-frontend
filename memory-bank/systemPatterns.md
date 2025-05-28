@@ -17,7 +17,7 @@
 
 - **Page Structure:**
   - **Standard Page Layout:** Most pages include a hero section (title, description) and a main content area.
-  - **Two-Column CRUD Pattern:** Several pages (`account-creation`, `merchant-creation`, `rules-mapping`) utilize a consistent two-column layout: a form for creation/input on one side (typically left), and a paginated, searchable/filterable table displaying existing data on the other. Modals are used for editing or confirmation.
+  - **Two-Column CRUD Pattern:** Several pages (`account-creation`, `rules-mapping`) utilize a consistent two-column layout. For `merchant-creation` within the `/process-flow`, this pattern is modified: merchant creation is handled via an icon-triggered modal, and selection is from a list of card-like items on the main page area. Modals are used for editing or confirmation. (The action menu for edit/delete on these items is temporarily disabled).
 - **Data Display:**
   - Tables (`@heroui/table`) are consistently used for displaying lists of data.
   - Pagination (`@heroui/pagination`) is implemented for tables displaying large datasets.
@@ -26,12 +26,12 @@
 - **Forms:**
   - Input fields (`@heroui/input`), select dropdowns (`@heroui/select`), and buttons (`@heroui/button`) from HeroUI are standard.
   - Client-side validation is performed, with error messages displayed near the relevant fields.
-- **Modals (`@heroui/modal`):** Used for confirmations (e.g., delete actions) and editing data in a focused manner.
+- **Modals (`@heroui/modal`):** Used for confirmations (e.g., delete actions) and editing data in a focused manner. Also used for creation in the redesigned `merchant-creation` page.
 - **Loading States:**
   - Skeleton loaders or loading indicators are displayed during data fetching or processing to provide visual feedback.
   - Buttons often show a loading state during asynchronous operations.
 - **Empty States:** Informative messages and icons are shown when no data is available (e.g., no accounts, no files uploaded, no merchant selected).
-- **Merchant Context:** The application heavily relies on a `selectedMerchant` context. Most functionalities are scoped to the selected merchant, and UI elements are often disabled or show prompts if no merchant is selected.
+- **Merchant Context:** The application heavily relies on a `selectedMerchant` context. Most functionalities are scoped to the selected merchant. For the `/process-flow` page, the global merchant selector in the Navbar is hidden. The first step of this flow (`MerchantManagementPage` at `src/pages/merchant-creation.tsx`) is responsible for establishing the merchant context by allowing creation (via modal) and selection from a list.
 - **Wizard/Stepper Pattern:** The `MainProcessFlowPage.tsx` implements a wizard/stepper UI to guide users through a sequence of operations (Merchant Creation → Account Creation → Rules Mapping → File Upload).
 - **Page Composition:** The `MainProcessFlowPage.tsx` composes other full-page components (`MerchantManagementPage`, `AccountCreationPage`, etc.) into its steps, demonstrating a modular approach where pages can be used standalone or as part of a guided flow.
 - **Dynamic Color Theming:**

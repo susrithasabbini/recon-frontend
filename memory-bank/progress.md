@@ -1,3 +1,71 @@
+## 2025-05-28
+
+### Task: Refactor `src/pages/rules-mapping.tsx` Layout
+
+- **Status**: Completed
+- **Summary**:
+  - Modified `src/pages/rules-mapping.tsx` to align its layout and UI patterns with `src/pages/merchant-creation.tsx`.
+  - Changed the root wrapper to a `div` with class `max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12`.
+  - Replaced the previous hero section with a simpler centered title, animated with `fadeInUp`.
+  - Removed the two-column grid layout.
+  - Consolidated the "Current Mappings" table into a single main `Card` component, animated with `scaleIn`.
+  - The `CardBody` now includes a header with the "Current Mappings" title and a "New Mapping" button (with `PlusIcon`).
+  - Moved the "Add Mapping" form into a `Modal` component, triggered by the "New Mapping" button.
+  - Added `isCreateMappingModalOpen` state to manage the modal's visibility.
+  - Updated `handleAddMapping` to close the modal upon successful mapping creation.
+- **Files Modified**:
+  - `src/pages/rules-mapping.tsx`
+  - `memory-bank/plans/2025-05-28-rules-mapping-layout-refactor-plan.md` (followed)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - Minor TypeScript error due to a leftover `</motion.section>` tag, which was removed.
+  - TypeScript errors due to incorrect `value` prop on `SelectItem` in the new modal, which were corrected by removing the prop.
+
+---
+
+### Task: Refactor `account-creation.tsx` to Use Table Display
+
+- **Status**: Completed
+- **Summary**:
+  - Modified `src/pages/account-creation.tsx` to replace the card-based list of accounts with a table display using `@heroui/table` components.
+  - Imported `Table`, `TableHeader`, `TableColumn`, `TableBody`, `TableRow`, `TableCell` from `@heroui/table`.
+  - Implemented the table structure with columns for Account Name, Type, Currency, Balance, and Actions.
+  - Integrated existing Edit and Delete buttons (with `Tooltip`s) into the "Actions" column.
+  - Adapted loading and empty state messages for the new table layout.
+  - Removed card-specific `fadeInUp` animations.
+- **Files Modified**:
+  - `src/pages/account-creation.tsx`
+  - `memory-bank/plans/2025-05-28-account-table-refactor-plan.md` (created and updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**: None.
+
+---
+
+### Task: Refactor Merchant Selection & `MerchantManagementPage` UI for /process-flow
+
+- **Status**: Partially Completed (Core UI refactored to shadcn-like design using HeroUI; action menu per merchant item is temporarily disabled pending clarification on `@heroui/menu` API).
+- **Summary**:
+  - Removed the global merchant selector from the Navbar for the `/process-flow` page.
+  - Iteratively redesigned `MerchantManagementPage` (`src/pages/merchant-creation.tsx`) based on user feedback aiming for a `shadcn/ui` look and feel, but implemented using existing `@heroui/*` components.
+  - The page now features a modal for creating new merchants (triggered by a button) and allows selection of merchants from a list of card-like items.
+  - Integrated with `DefaultContext` for state management (fetching merchants, adding, selecting).
+  - The Edit/Delete actions menu for each merchant item has been temporarily commented out in the code to resolve TypeScript errors related to the `@heroui/menu` API. Further clarification is needed for its correct implementation.
+- **Files Modified**:
+  - `src/components/navbar.tsx`
+  - `src/pages/merchant-creation.tsx` (multiple iterations, significant rewrite)
+  - `memory-bank/activeContext.md`
+  - `memory-bank/progress.md` (this entry updated)
+  - `memory-bank/systemPatterns.md` (to be updated)
+  - `memory-bank/plans/2025-05-28-merchant-select-refactor-plan.md`
+- **Issues Encountered**:
+  - Initial `replace_in_file` attempts for `merchant-creation.tsx` were challenging due to the complexity of UI changes.
+  - Switched to `write_to_file` for `merchant-creation.tsx`. Early `write_to_file` attempts had issues (e.g., accidental CDATA wrapper, TypeScript errors due to API assumptions for `@heroui/menu` and context function signatures).
+  - Iteratively resolved TypeScript errors. The current version of `merchant-creation.tsx` is functional but with the action menu temporarily disabled.
+
+---
+
 # Progress Log
 
 ## 2025-05-22
