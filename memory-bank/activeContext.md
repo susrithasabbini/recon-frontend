@@ -1,30 +1,34 @@
-# Active Context - 2025-05-28
+# Active Context - 2025-05-29
 
 ## Current Focus
 
-- Refactor `src/pages/rules-mapping.tsx` page layout to be similar to `src/pages/merchant-creation.tsx`.
+- Implemented changes to prevent same account selection in `file-upload.tsx` and `file-upload-2.tsx` when used in `preview-page.tsx`.
+- Adjusted table row count to 5 and set a minimum height for tables in both file upload components.
 
 ## Key Decisions & Changes
 
-- **`src/pages/rules-mapping.tsx`**:
-  - Changed the root wrapper to a `div` with class `max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12`.
-  - Replaced the complex hero section with a simpler centered title using `motion.div` with `fadeInUp` animation, styled like `merchant-creation.tsx`.
-  - Removed the two-column grid layout (`aside` for form, `main` for table).
-  - Consolidated the "Current Mappings" table into a single main `Card` component, wrapped in a `motion.div` with `scaleIn` animation.
-  - The `CardBody` now contains a header section with the "Current Mappings" title and a "New Mapping" button.
-  - The "Add Mapping" form has been moved into a `Modal` component.
-  - Added `isCreateMappingModalOpen` state to control the visibility of the "Add Mapping" modal.
-  - The "New Mapping" button in the card header now triggers this modal.
-  - The `handleAddMapping` function now closes the modal on successful submission.
-  - Imported `PlusIcon` for the "New Mapping" button.
-  - Ensured animation variants (`fadeInUp`, `scaleIn`) and general structure align with `merchant-creation.tsx`.
+- **`src/pages/preview-page.tsx`**:
+  - Modified to manage account state for both `FileUploadPage` and `FileUpload2Page`.
+  - Fetches all accounts and passes filtered lists and selection handlers as props to child components.
+  - Passes `isLoading` prop to child components.
+
+- **`src/pages/file-upload.tsx` & `src/pages/file-upload-2.tsx`**:
+  - Refactored to accept `accounts`, `selectedAccount`, `onAccountChange`, `componentId`, and `isLoading` props.
+  - Removed internal account fetching logic.
+  - `rowsPerPage` constant changed from `10` to `5`.
+  - Added `min-h-[350px]` class to `Card` components wrapping the tables to ensure consistent minimum height.
+  - Updated `data-testid` attributes for account select and tables to include `componentId`.
+  - Retained local `loading` state for file upload operations, distinct from the `isLoading` prop.
+
 - **Files Modified**:
-  - `src/pages/rules-mapping.tsx`
-  - `memory-bank/plans/2025-05-28-rules-mapping-layout-refactor-plan.md` (followed)
+  - `src/pages/preview-page.tsx`
+  - `src/pages/file-upload.tsx`
+  - `src/pages/file-upload-2.tsx`
+  - `memory-bank/plans/2025-05-29-preview-page-sync-and-style-plan.md` (created)
   - `memory-bank/activeContext.md` (this update)
 
 ## Next Steps
 
 - Update `memory-bank/progress.md`.
-- Update `memory-bank/rules-mapping.md`.
-- Thoroughly test the rules mapping page functionality (listing, modal form, creation, deletion, pagination, responsiveness).
+- Update `memory-bank/file-upload.md` to reflect these changes.
+- Suggest testing the `PreviewPage` to ensure the account selection logic and table styling work as expected.

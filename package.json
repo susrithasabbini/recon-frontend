@@ -28,6 +28,7 @@
     "@heroui/switch": "2.2.17",
     "@heroui/system": "2.4.15",
     "@heroui/table": "^2.2.18",
+    "@heroui/tabs": "^2.2.16",
     "@heroui/theme": "2.4.15",
     "@heroui/toast": "^2.0.9",
     "@heroui/use-theme": "2.1.8",
