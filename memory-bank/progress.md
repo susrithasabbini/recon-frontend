@@ -1,3 +1,153 @@
+## 2025-05-29
+
+### Task: Sync Account Selection and Style Tables in File Upload Components
+
+- **Status**: Completed
+- **Summary**:
+  - Modified `src/pages/preview-page.tsx` to manage account selection state for `FileUploadPage` and `FileUpload2Page`. This prevents the same account from being selected in both components. `preview-page.tsx` now fetches all accounts and passes filtered lists, the selected account, and an update handler to each child component. It also passes an `isLoading` prop.
+  - Refactored `src/pages/file-upload.tsx` and `src/pages/file-upload-2.tsx`:
+    - Updated to accept `accounts`, `selectedAccount`, `onAccountChange`, `componentId`, and `isLoading` as props.
+    - Removed their internal logic for fetching accounts and managing `selectedAccount` state.
+    - The `useEffect` hook that resets component state on `selectedMerchant` change was updated to call the `onAccountChange` prop.
+    - The `rowsPerPage` constant was changed from `10` to `5`.
+    - The `Card` components wrapping the "Processing Entries" and "Processed Entries" tables were given a `min-h-[350px]` class to ensure a consistent minimum height.
+    - The `Select` component for account selection and the table `data-testid` attributes were updated to include the `componentId` prop for better testability.
+    - The local `loading` state (and `setLoading` setter) was preserved in both components for handling the file upload process, distinct from the `isLoading` prop received from the parent.
+- **Files Modified**:
+  - `src/pages/preview-page.tsx`
+  - `src/pages/file-upload.tsx`
+  - `src/pages/file-upload-2.tsx`
+  - `memory-bank/plans/2025-05-29-preview-page-sync-and-style-plan.md` (created)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - Multiple `replace_in_file` attempts were needed for `file-upload.tsx` and `file-upload-2.tsx` due to the complexity of changes and ensuring the correct state of the file was used as a base for diffs.
+  - Initial TypeScript errors in `preview-page.tsx` due to missing `useMemo` import were resolved.
+  - TypeScript errors in `file-upload.tsx` and `file-upload-2.tsx` related to prop types and state management were resolved iteratively.
+
+---
+
+## 2025-05-29
+
+### Task: Refactor UI/UX for Account Selection on `src/pages/file-upload.tsx`
+
+- **Status**: Completed
+- **Summary**:
+  - Addressed user feedback regarding the layout of the account selection section on the `file-upload.tsx` page.
+  - The `motion.div` wrapping the "Select Account" dropdown and "Upload File & Set Mode" button was modified:
+    - Removed the `w-full max-w-md mx-auto` classes that caused over-centering.
+    - Applied `flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8` for a responsive layout. On medium screens and up, the select dropdown and upload button will be side-by-side.
+    - The entire section is now styled with `p-4 sm:p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-800/50` to give it a card-like, integrated appearance.
+  - The `Select` component for account selection was given `className="w-full md:max-w-xs"` to control its width better on larger screens.
+  - The "Upload File & Set Mode" `Button` was given `className="w-full md:w-auto"` to be full-width on small screens and auto-width on larger screens.
+  - Ensured the `Tabs` component has `className="mt-6 w-full"` to utilize available width.
+- **Files Modified**:
+  - `src/pages/file-upload.tsx`
+  - `memory-bank/plans/2025-05-29-file-upload-tabs-plan.md` (updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**: None.
+
+---
+
+## 2025-05-29
+
+### Task: Correct Status Color Syntax in `src/pages/file-upload.tsx`
+
+- **Status**: Completed
+- **Summary**:
+  - Addressed user feedback regarding incorrect status colors in the tables on the `file-upload.tsx` page.
+  - Corrected the template literal syntax in `className` definitions for status badges from `\${...}` to `${...}`. This ensures the dynamic class names for colors are applied correctly.
+  - This fix was applied to:
+    - Status display in the "Processing Entries" table.
+    - Entry Status display in the "Processed Entries" table.
+    - Recon Status display in the "Processed Entries" table.
+- **Files Modified**:
+  - `src/pages/file-upload.tsx`
+  - `memory-bank/plans/2025-05-29-file-upload-tabs-plan.md` (updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**: None.
+
+---
+
+## 2025-05-29
+
+### Task: Refine Tabbed View in `src/pages/file-upload.tsx` (API and Polling Fixes)
+
+- **Status**: Completed
+- **Summary**:
+  - Addressed user feedback regarding 404 errors and polling behavior on the `file-upload.tsx` page.
+  - **API Endpoint Correction**: Changed incorrect template literal syntax `\${selectedAccount}` to the correct `${selectedAccount}` in all API calls within `file-upload.tsx` (for fetching staging entries, account entries, and actual file upload).
+  - **Conditional Polling**:
+    - Modified the `useEffect` hooks responsible for fetching staging entries and account entries.
+    - Polling for staging entries now only starts if `activeTabKey === "processing"`.
+    - Polling for account entries now only starts if `activeTabKey === "processed"`.
+    - `activeTabKey` was added to the dependency array of both `useEffect` hooks.
+    - `intervalId` in these hooks is now initialized to `undefined` to prevent "used before assigned" TypeScript errors.
+- **Files Modified**:
+  - `src/pages/file-upload.tsx`
+  - `memory-bank/plans/2025-05-29-file-upload-tabs-plan.md` (updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - TypeScript errors "Variable 'intervalId' is used before being assigned" were resolved by initializing `intervalId` to `undefined`.
+
+---
+
+## 2025-05-29
+
+### Task: Implement Tabbed View in `src/pages/file-upload.tsx`
+
+- **Status**: Completed
+- **Summary**:
+  - Modified `src/pages/file-upload.tsx` to display "Processing Entries" and "Processed Entries" tables within a tabbed interface.
+  - Imported `Tabs` and `Tab` components from `@heroui/tabs`.
+  - Added `activeTabKey` state to manage the currently selected tab.
+  - Restructured the JSX:
+    - Wrapped the two main table sections in a `Tabs` component.
+    - Each section (Processing Entries, Processed Entries) is now a child of a `Tab` component, with `key` and `title` props.
+    - Content for each tab (header, filters, Card with Table) is nested directly within its `Tab` component.
+    - Added `className="mt-6"` to the `Tabs` component and `className="mt-4"` to internal content wrappers and `Card`s for spacing.
+- **Files Modified**:
+  - `src/pages/file-upload.tsx`
+  - `memory-bank/plans/2025-05-29-file-upload-tabs-plan.md` (created and updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - Initial import for `@heroui/tabs` was incorrect (tried `TabList`, `TabPanel` etc., which are not separate exports). Corrected based on user-provided example.
+  - A brief attempt to import from `@heroui/react` also failed, confirming `@heroui/tabs` is the correct source for `Tabs` and `Tab`.
+
+---
+
+## 2025-05-29
+
+### Task: Refactor `src/pages/file-upload.tsx` Layout and UI (with Feedback)
+
+- **Status**: Completed
+- **Summary**:
+  - Modified `src/pages/file-upload.tsx` to align its layout with `src/pages/account-creation.tsx`.
+  - Changed the root wrapper to a `div` with class `max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12`.
+  - Updated the title section to a centered style.
+  - Removed the `Card` component that previously wrapped the "Select Account" dropdown. The dropdown and its label are now directly within a styled `div` (with padding, border, shadow, and background) for visual separation and centering.
+  - Added an "Upload File & Set Mode" button below the Account Selection section, which triggers a modal.
+  - Implemented a `Modal` to house the `FileUploadForm`.
+  - Modified `src/components/file-upload-form.tsx` to remove its internal `Card` and `motion.div` wrappers, so it only renders the form fields and status display directly. This ensures it appears cleanly within the `ModalBody` of `file-upload.tsx` as per feedback.
+  - Removed the old, direct placement of `FileUploadForm` from `src/pages/file-upload.tsx`.
+  - Ensured table sections are centered within the new single-column layout.
+  - Added `isFileUploadModalOpen` state and updated `handleActualFileUpload` for modal interaction.
+- **Files Modified**:
+  - `src/pages/file-upload.tsx` (iterative changes based on plan and feedback)
+  - `src/components/file-upload-form.tsx` (updated based on feedback)
+  - `memory-bank/plans/2025-05-29-file-upload-refactor-plan.md` (created and followed)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry updated)
+- **Issues Encountered**:
+  - Multiple `replace_in_file` attempts failed for inserting the Modal and removing the old form due to complexities in matching exact SEARCH blocks after previous `write_to_file` operations. Fallback to `write_to_file` was used to ensure progress for these steps.
+  - Further `write_to_file` was used to incorporate user feedback regarding the Account Selection card removal and `FileUploadForm` internal structure.
+
+---
+
 ## 2025-05-28
 
 ### Task: Refactor `src/pages/rules-mapping.tsx` Layout

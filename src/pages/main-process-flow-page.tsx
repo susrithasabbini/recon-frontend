@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import RowSteps from "@/components/row-steps";
 import AccountCreationPage from "./account-creation";
-import FileUploadPage from "./file-upload";
 import RulesMappingPage from "./rules-mapping";
 import DefaultLayout from "@/layouts/default";
 import MerchantManagementPage from "./merchant-creation";
 import NavigationButtons from "@/components/navigation-buttons";
+import { PreviewPage } from "./preview-page";
+import UploadPage from "./upload-page";
 
 const pageSteps = [
   { title: "Merchant Creation" },
   { title: "Account Creation" },
   { title: "Rules Mapping" },
   { title: "File Upload" },
+  { title: "Reconciliation" },
 ];
 
 // Array of components to render for each step
@@ -19,7 +21,8 @@ const stepContentComponents = [
   MerchantManagementPage,
   AccountCreationPage,
   RulesMappingPage,
-  FileUploadPage,
+  UploadPage,
+  PreviewPage,
 ];
 
 const MainProcessFlowPage: React.FC = () => {
@@ -29,7 +32,7 @@ const MainProcessFlowPage: React.FC = () => {
 
   return (
     <DefaultLayout>
-      <div className="container mx-auto flex flex-col items-center gap-y-6">
+      <div className="mx-10 flex flex-col items-center gap-y-6">
         <div className="w-full flex justify-center">
           <RowSteps
             steps={pageSteps}
