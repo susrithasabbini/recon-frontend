@@ -173,7 +173,7 @@ export default function FileUploadPage() {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       setUploadStatus(data);
@@ -208,7 +208,7 @@ export default function FileUploadPage() {
     setSelectedAccount(selected);
     // Clear file input
     const fileInput = document.getElementById(
-      "file-upload"
+      "file-upload",
     ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
@@ -218,7 +218,7 @@ export default function FileUploadPage() {
   const pages = Math.max(1, Math.ceil((csvData.length - 1) / rowsPerPage));
   const items = csvData.slice(
     (page - 1) * rowsPerPage + 1,
-    page * rowsPerPage + 1
+    page * rowsPerPage + 1,
   );
 
   return (
@@ -240,7 +240,7 @@ export default function FileUploadPage() {
             custom={1}
             className={clsx(
               title({ size: "md", color: "primary" }),
-              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl"
+              "leading-6 py-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
             )}
           >
             File Upload
@@ -297,13 +297,19 @@ export default function FileUploadPage() {
                         selectedKeys={[selectedAccount]}
                         onSelectionChange={handleAccountChange}
                         data-testid="account-select"
+                        disallowEmptySelection
                         classNames={{
                           trigger:
                             "focus:ring-2 focus:ring-primary focus:border-primary",
                         }}
                       >
                         {accounts.map((account) => (
-                          <SelectItem key={account.account_id}>
+                          <SelectItem
+                            key={account.account_id}
+                            aria-disabled={
+                              account.account_id === selectedAccount
+                            }
+                          >
                             {account.account_name}
                           </SelectItem>
                         ))}
@@ -318,9 +324,20 @@ export default function FileUploadPage() {
                         }
                         className="w-full"
                         data-testid="processing-mode-select"
+                        disallowEmptySelection
                       >
-                        <SelectItem key="TRANSACTION">Transaction</SelectItem>
-                        <SelectItem key="CONFIRMATION">Confirmation</SelectItem>
+                        <SelectItem
+                          key="TRANSACTION"
+                          aria-disabled={processingMode === "TRANSACTION"}
+                        >
+                          Transaction
+                        </SelectItem>
+                        <SelectItem
+                          key="CONFIRMATION"
+                          aria-disabled={processingMode === "CONFIRMATION"}
+                        >
+                          Confirmation
+                        </SelectItem>
                       </Select>
                     </div>
                     <div className="flex flex-col gap-2">

@@ -26,9 +26,14 @@ export const ColorThemeSelector: React.FC = () => {
       onSelectionChange={handleThemeChange}
       className="w-40"
       startContent={<SwatchIcon className="w-5 h-5 text-default-500" />}
+      disallowEmptySelection
     >
       {availableThemes.map((availTheme) => (
-        <SelectItem key={availTheme.name} textValue={availTheme.name}>
+        <SelectItem
+          key={availTheme.name}
+          textValue={availTheme.name}
+          aria-disabled={theme?.name === availTheme.name}
+        >
           <div className="flex items-center gap-2">
             <span
               className="w-4 h-4 rounded-full"

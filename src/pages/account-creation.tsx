@@ -277,7 +277,7 @@ export default function AccountManagementPage() {
                     onPress={() => setIsCreateDialogOpen(true)}
                     className="text-white flex-shrink-0"
                     startContent={<PlusIcon className="w-4 h-4 mr-1 sm:mr-2" />}
-                    isDisabled={!selectedMerchant}
+                    aria-disabled={!selectedMerchant}
                   >
                     New Account
                   </Button>
@@ -484,8 +484,18 @@ export default function AccountManagementPage() {
                   disallowEmptySelection
                   className="w-full"
                 >
-                  <SelectItem key="DEBIT_NORMAL">Debit</SelectItem>
-                  <SelectItem key="CREDIT_NORMAL">Credit</SelectItem>
+                  <SelectItem
+                    key="DEBIT_NORMAL"
+                    aria-disabled={newAccountType === "DEBIT_NORMAL"}
+                  >
+                    Debit
+                  </SelectItem>
+                  <SelectItem
+                    key="CREDIT_NORMAL"
+                    aria-disabled={newAccountType === "CREDIT_NORMAL"}
+                  >
+                    Credit
+                  </SelectItem>
                 </Select>
               </div>
               <div>
@@ -503,9 +513,24 @@ export default function AccountManagementPage() {
                   disallowEmptySelection
                   className="w-full"
                 >
-                  <SelectItem key="USD">USD</SelectItem>
-                  <SelectItem key="EUR">EUR</SelectItem>
-                  <SelectItem key="GBP">GBP</SelectItem>
+                  <SelectItem
+                    key="USD"
+                    aria-disabled={newAccountCurrency === "USD"}
+                  >
+                    USD
+                  </SelectItem>
+                  <SelectItem
+                    key="EUR"
+                    aria-disabled={newAccountCurrency === "EUR"}
+                  >
+                    EUR
+                  </SelectItem>
+                  <SelectItem
+                    key="GBP"
+                    aria-disabled={newAccountCurrency === "GBP"}
+                  >
+                    GBP
+                  </SelectItem>
                   {/* Add more currencies as needed */}
                 </Select>
               </div>

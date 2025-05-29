@@ -2,15 +2,15 @@
 
 **Objective:** Align layout with `account-creation.tsx`, move file upload/processing mode to a modal, and center tables.
 
-| Done | # | Action                                                                 | Detail                                                                                                                                                              |
-|------|---|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [ ]  | 1 | Add Imports & Modal State                                              | Import `Modal`, `Button`, and related components from HeroUI. Add state for managing modal visibility (e.g., `isFileUploadModalOpen`).                               |
-| [ ]  | 2 | Update Page Root Structure & Title                                     | Change the root element to `<div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">` and update the title section to match the centered style of other pages. |
-| [ ]  | 3 | Relocate Account Selection Card & Add "Upload File" Button             | Keep the "Select Account" card on the main page. Add a new "Upload File" button that will trigger the modal.                                                        |
-| [ ]  | 4 | Implement File Upload Modal                                            | Create a new Modal component. Move the existing `FileUploadForm` component (or its core elements for file input, processing mode, and upload action) into this modal. |
-| [ ]  | 5 | Remove Old `FileUploadForm` Placement & Two-Column Grid                | Delete the `FileUploadForm` from its current position in the layout and remove the `aside`/`main` two-column grid structure.                                        |
-| [ ]  | 6 | Restructure & Center Table Sections                                    | Ensure the "Processing Entries" and "Processed Entries" table cards are directly within the new single-column centered layout, similar to `account-creation.tsx`.     |
-| [ ]  | 7 | Update Memory Bank                                                     | Document changes in `activeContext.md`, `progress.md`, and `file-upload.md`.                                                                                        |
+| Done | #   | Action                                                     | Detail                                                                                                                                                                |
+| ---- | --- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ ]  | 1   | Add Imports & Modal State                                  | Import `Modal`, `Button`, and related components from HeroUI. Add state for managing modal visibility (e.g., `isFileUploadModalOpen`).                                |
+| [ ]  | 2   | Update Page Root Structure & Title                         | Change the root element to `<div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">` and update the title section to match the centered style of other pages.      |
+| [ ]  | 3   | Relocate Account Selection Card & Add "Upload File" Button | Keep the "Select Account" card on the main page. Add a new "Upload File" button that will trigger the modal.                                                          |
+| [ ]  | 4   | Implement File Upload Modal                                | Create a new Modal component. Move the existing `FileUploadForm` component (or its core elements for file input, processing mode, and upload action) into this modal. |
+| [ ]  | 5   | Remove Old `FileUploadForm` Placement & Two-Column Grid    | Delete the `FileUploadForm` from its current position in the layout and remove the `aside`/`main` two-column grid structure.                                          |
+| [ ]  | 6   | Restructure & Center Table Sections                        | Ensure the "Processing Entries" and "Processed Entries" table cards are directly within the new single-column centered layout, similar to `account-creation.tsx`.     |
+| [ ]  | 7   | Update Memory Bank                                         | Document changes in `activeContext.md`, `progress.md`, and `file-upload.md`.                                                                                          |
 
 <!--
 {

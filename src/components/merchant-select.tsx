@@ -60,7 +60,10 @@ export default function MerchantSelect({ className }: MerchantSelectProps) {
         disallowEmptySelection
       >
         {merchants.map((merchant) => (
-          <SelectItem key={merchant.merchant_id}>
+          <SelectItem
+            key={merchant.merchant_id}
+            aria-disabled={merchant.merchant_id === selectedMerchant}
+          >
             {merchant.merchant_name}
           </SelectItem>
         ))}

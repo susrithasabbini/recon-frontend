@@ -8,7 +8,8 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<HomePage />} path="/" />
       <Route element={<MainProcessFlowPage />} path="/process-flow" />
-      <Route element={<ViewTransactionsPage />} path="/transactions" /> {/* Add new route */}
+      <Route element={<ViewTransactionsPage />} path="/transactions" />{" "}
+      {/* Add new route */}
     </Routes>
   );
 }

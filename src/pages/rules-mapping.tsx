@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
+import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import {
@@ -449,7 +449,10 @@ export default function RulesMappingPage() {
                 }}
               >
                 {accounts.map((acc) => (
-                  <SelectItem key={acc.account_id}>
+                  <SelectItem
+                    key={acc.account_id}
+                    aria-disabled={acc.account_id === newMapping.source}
+                  >
                     {acc.account_name}
                   </SelectItem>
                 ))}
@@ -474,7 +477,10 @@ export default function RulesMappingPage() {
                 }}
               >
                 {getAvailableTargetAccounts(newMapping.source).map((acc) => (
-                  <SelectItem key={acc.account_id}>
+                  <SelectItem
+                    key={acc.account_id}
+                    aria-disabled={acc.account_id === newMapping.target}
+                  >
                     {acc.account_name}
                   </SelectItem>
                 ))}

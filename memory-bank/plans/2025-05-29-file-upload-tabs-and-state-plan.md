@@ -3,20 +3,21 @@
 ## Date: 2025-05-29
 
 ## Goals
+
 1.  Remove the "Processing Entries" tab and related logic from `src/pages/file-upload.tsx` and `src/pages/file-upload-2.tsx`.
 2.  Implement shared state management via `src/contexts/default-context.tsx` to prevent selecting the same account in both file upload components.
 
 ## Steps
 
-| Done | # | Component / File                 | Action                                                                 | Detail / Success Criteria                                                                                                |
-|------|---|----------------------------------|------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| [ ]  | 1 | `src/pages/file-upload.tsx`      | Remove "Processing Entries" tab & logic                                | Only "Processed Entries" table and filters are visible. No `activeTabKey` state. Staging-related code removed.           |
-| [ ]  | 2 | `src/pages/file-upload-2.tsx`    | Remove "Processing Entries" tab & logic                                | Only "Processed Entries" table and filters are visible. No `activeTabKey` state. Staging-related code removed.           |
-| [ ]  | 3 | `src/contexts/default-context.tsx` | Request file content                                                   | Content of `src/contexts/default-context.tsx` obtained.                                                                  |
-| [ ]  | 4 | `src/contexts/default-context.tsx` | Add shared state for selected accounts                                 | Context includes `selectedAccount1`, `setSelectedAccount1`, `selectedAccount2`, `setSelectedAccount2`.                   |
-| [ ]  | 5 | `src/pages/file-upload.tsx`      | Integrate shared account state & filter dropdown                       | Uses context state for `selectedAccount1`. Filters out `selectedAccount2` from dropdown.                                 |
-| [ ]  | 6 | `src/pages/file-upload-2.tsx`    | Integrate shared account state & filter dropdown                       | Uses context state for `selectedAccount2`. Filters out `selectedAccount1` from dropdown.                                 |
-| [ ]  | 7 | Memory Bank                      | Update `activeContext.md` and `progress.md`                            | Files updated with summary of changes and next steps.                                                                    |
+| Done | #   | Component / File                   | Action                                           | Detail / Success Criteria                                                                                      |
+| ---- | --- | ---------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| [ ]  | 1   | `src/pages/file-upload.tsx`        | Remove "Processing Entries" tab & logic          | Only "Processed Entries" table and filters are visible. No `activeTabKey` state. Staging-related code removed. |
+| [ ]  | 2   | `src/pages/file-upload-2.tsx`      | Remove "Processing Entries" tab & logic          | Only "Processed Entries" table and filters are visible. No `activeTabKey` state. Staging-related code removed. |
+| [ ]  | 3   | `src/contexts/default-context.tsx` | Request file content                             | Content of `src/contexts/default-context.tsx` obtained.                                                        |
+| [ ]  | 4   | `src/contexts/default-context.tsx` | Add shared state for selected accounts           | Context includes `selectedAccount1`, `setSelectedAccount1`, `selectedAccount2`, `setSelectedAccount2`.         |
+| [ ]  | 5   | `src/pages/file-upload.tsx`        | Integrate shared account state & filter dropdown | Uses context state for `selectedAccount1`. Filters out `selectedAccount2` from dropdown.                       |
+| [ ]  | 6   | `src/pages/file-upload-2.tsx`      | Integrate shared account state & filter dropdown | Uses context state for `selectedAccount2`. Filters out `selectedAccount1` from dropdown.                       |
+| [ ]  | 7   | Memory Bank                        | Update `activeContext.md` and `progress.md`      | Files updated with summary of changes and next steps.                                                          |
 
 <!--
 {

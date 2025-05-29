@@ -1,5 +1,30 @@
 ## 2025-05-29
 
+### Task: Modify Selectbox Behavior Globally
+
+- **Status**: Completed
+- **Summary**:
+  - Ensured `disallowEmptySelection` prop is active on all `@heroui/select` components across the application.
+  - Disabled the currently selected item within dropdown lists using the `isDisabled` prop on `SelectItem` components to prevent re-selection. This change ensures that an option must always be selected and the user cannot click the already selected item to deselect it.
+- **Files Modified**:
+  - `src/components/merchant-select.tsx`
+  - `src/pages/upload-page.tsx`
+  - `src/pages/account-creation.tsx`
+  - `src/pages/rules-mapping.tsx`
+  - `src/components/color-theme-selector.tsx`
+  - `src/components/file-upload-form.tsx`
+  - `src/pages/bank-preview.tsx`
+  - `src/pages/psp-preview.tsx`
+  - `memory-bank/plans/2025-05-29-selectbox-behavior-plan.md` (updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - Minor TypeScript error in `src/components/merchant-select.tsx` due to using `disabled` prop instead of `isDisabled` for `SelectItem`. Corrected.
+
+---
+
+## 2025-05-29
+
 ### Task: Implement "View Transactions" Page with Accordion
 
 - **Status**: Completed

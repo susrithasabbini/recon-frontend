@@ -97,9 +97,20 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
                   trigger:
                     "focus:ring-2 focus:ring-primary focus:border-primary",
                 }}
+                disallowEmptySelection
               >
-                <SelectItem key="CONFIRMATION">Confirmation</SelectItem>
-                <SelectItem key="TRANSACTION">Transaction</SelectItem>
+                <SelectItem
+                  key="CONFIRMATION"
+                  aria-disabled={processingMode === "CONFIRMATION"}
+                >
+                  Confirmation
+                </SelectItem>
+                <SelectItem
+                  key="TRANSACTION"
+                  aria-disabled={processingMode === "TRANSACTION"}
+                >
+                  Transaction
+                </SelectItem>
               </Select>
             </div>
             <Button

@@ -50,7 +50,7 @@ const ViewTransactionsPage: React.FC = () => {
       setError(null);
       try {
         const response = await api.get<Transaction[]>(
-          `/merchants/${selectedMerchant}/transactions`
+          `/merchants/${selectedMerchant}/transactions`,
         );
         setTransactions(response.data);
       } catch (err) {
@@ -58,7 +58,7 @@ const ViewTransactionsPage: React.FC = () => {
         setError(
           err instanceof Error
             ? err.message
-            : "An unknown error occurred while fetching transactions."
+            : "An unknown error occurred while fetching transactions.",
         );
         setTransactions([]);
       } finally {
