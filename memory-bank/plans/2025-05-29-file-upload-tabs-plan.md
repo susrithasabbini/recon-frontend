@@ -6,16 +6,16 @@
 
 ## Steps
 
-| Done | # | Action | Detail |
-|------|---|--------|--------|
-| [x]  | 1 | Import Tab Components | Import `Tabs`, `Tab` from `@heroui/tabs`. |
-| [x]  | 2 | Add State for Active Tab | Add `const [activeTabKey, setActiveTabKey] = useState<string>("processing");` |
-| [x]  | 3 | Restructure JSX for Tabs | Wrap the "Processing Entries" and "Processed Entries" sections within `Tabs` and `Tab` components according to `@heroui/tabs` API. |
-| [x]  | 3a| Correct API Endpoint Syntax | Changed `\${selectedAccount}` to `${selectedAccount}` in API GET and POST calls. |
-| [x]  | 3b| Implement Conditional Polling | Modified `useEffect` hooks for data fetching to poll only when the relevant tab is active and initialize `intervalId`. |
-| [x]  | 3c| Correct Status Color Syntax | Changed `\${...}` to `${...}` in className for status badges in tables. |
-| [x]  | 3d| Refactor Account Selection UI/UX | Improved layout of account selection and upload button area for better visual hierarchy and responsiveness. |
-| [ ]  | 4 | Update Memory Bank | Update `activeContext.md`, `progress.md`, and `file-upload.md`. |
+| Done | #   | Action                           | Detail                                                                                                                             |
+| ---- | --- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [x]  | 1   | Import Tab Components            | Import `Tabs`, `Tab` from `@heroui/tabs`.                                                                                          |
+| [x]  | 2   | Add State for Active Tab         | Add `const [activeTabKey, setActiveTabKey] = useState<string>("processing");`                                                      |
+| [x]  | 3   | Restructure JSX for Tabs         | Wrap the "Processing Entries" and "Processed Entries" sections within `Tabs` and `Tab` components according to `@heroui/tabs` API. |
+| [x]  | 3a  | Correct API Endpoint Syntax      | Changed `\${selectedAccount}` to `${selectedAccount}` in API GET and POST calls.                                                   |
+| [x]  | 3b  | Implement Conditional Polling    | Modified `useEffect` hooks for data fetching to poll only when the relevant tab is active and initialize `intervalId`.             |
+| [x]  | 3c  | Correct Status Color Syntax      | Changed `\${...}` to `${...}` in className for status badges in tables.                                                            |
+| [x]  | 3d  | Refactor Account Selection UI/UX | Improved layout of account selection and upload button area for better visual hierarchy and responsiveness.                        |
+| [ ]  | 4   | Update Memory Bank               | Update `activeContext.md`, `progress.md`, and `file-upload.md`.                                                                    |
 
 <!--
 {

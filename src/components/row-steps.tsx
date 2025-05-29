@@ -62,7 +62,7 @@ const RowSteps = React.forwardRef<HTMLButtonElement, RowStepsProps>(
     // that use CSS variables set by ColorThemeContext.
 
     return (
-      <div className="flex items-center gap-x-4 w-2/3">
+      <div className="flex items-center gap-x-4 w-full">
         <nav
           aria-label="Progress"
           className="flex flex-grow justify-center -my-4 overflow-x-auto py-4"

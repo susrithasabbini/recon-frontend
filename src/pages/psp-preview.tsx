@@ -116,7 +116,7 @@ export default function PSPPreview({
       if (!selectedAccount || !selectedMerchant) return;
       try {
         const { data } = await api.get<StagingEntry[]>(
-          `/accounts/${selectedAccount}/staging-entries`
+          `/accounts/${selectedAccount}/staging-entries`,
         );
         setStagingEntries(data);
       } catch (error) {
@@ -142,7 +142,7 @@ export default function PSPPreview({
       if (!selectedAccount || !selectedMerchant) return;
       try {
         const { data } = await api.get<AccountEntry[]>(
-          `/accounts/${selectedAccount}/entries`
+          `/accounts/${selectedAccount}/entries`,
         );
         setAccountEntries(data);
       } catch (error) {
@@ -166,7 +166,7 @@ export default function PSPPreview({
     let result = stagingEntries;
     if (stagingStatusFilter !== "all") {
       result = stagingEntries.filter(
-        (entry) => entry.status === stagingStatusFilter
+        (entry) => entry.status === stagingStatusFilter,
       );
     }
     return result;
@@ -174,7 +174,7 @@ export default function PSPPreview({
 
   const stagingPages = Math.max(
     1,
-    Math.ceil(filteredStagingEntries.length / rowsPerPage)
+    Math.ceil(filteredStagingEntries.length / rowsPerPage),
   );
   const stagingItems = useMemo(() => {
     let sortedEntries = [...filteredStagingEntries];
@@ -206,7 +206,7 @@ export default function PSPPreview({
     }
     return sortedEntries.slice(
       (stagingPage - 1) * rowsPerPage,
-      stagingPage * rowsPerPage
+      stagingPage * rowsPerPage,
     );
   }, [filteredStagingEntries, stagingPage, rowsPerPage, stagingSortDescriptor]);
 
@@ -234,7 +234,7 @@ export default function PSPPreview({
 
   const entriesPages = Math.max(
     1,
-    Math.ceil(filteredAccountEntries.length / rowsPerPage)
+    Math.ceil(filteredAccountEntries.length / rowsPerPage),
   );
   const entriesItems = useMemo(() => {
     let sortedEntries = [...filteredAccountEntries];
@@ -265,7 +265,7 @@ export default function PSPPreview({
     }
     return sortedEntries.slice(
       (entriesPage - 1) * rowsPerPage,
-      entriesPage * rowsPerPage
+      entriesPage * rowsPerPage,
     );
   }, [filteredAccountEntries, entriesPage, rowsPerPage, entriesSortDescriptor]);
 
@@ -295,7 +295,7 @@ export default function PSPPreview({
               aria-label="Select Account"
               placeholder="Select an account"
               className="w-full md:max-w-xs"
-              isDisabled={
+              aria-disabled={
                 !selectedMerchant || isLoading || accounts.length === 0
               }
               selectedKeys={selectedAccount ? [selectedAccount] : []}
@@ -304,12 +304,16 @@ export default function PSPPreview({
                 onAccountChange(value || "");
               }}
               data-testid={`account-select-${componentId}`}
+              disallowEmptySelection
               classNames={{
                 trigger: "focus:ring-2 focus:ring-primary focus:border-primary",
               }}
             >
               {accounts.map((account) => (
-                <SelectItem key={account.account_id}>
+                <SelectItem
+                  key={account.account_id}
+                  aria-disabled={account.account_id === selectedAccount}
+                >
                   {account.account_name}
                 </SelectItem>
               ))}
@@ -342,7 +346,7 @@ export default function PSPPreview({
                       }
                       onSelectionChange={(keys) =>
                         setStagingStatusFilter(
-                          (Array.from(keys)[0] as string) || "all"
+                          (Array.from(keys)[0] as string) || "all",
                         )
                       }
                       className="w-56"
@@ -352,12 +356,32 @@ export default function PSPPreview({
                           "focus:ring-2 focus:ring-primary focus:border-primary",
                       }}
                     >
-                      <SelectItem key="all">All Statuses</SelectItem>
-                      <SelectItem key="NEEDS_MANUAL_REVIEW">
+                      <SelectItem
+                        key="all"
+                        aria-disabled={stagingStatusFilter === "all"}
+                      >
+                        All Statuses
+                      </SelectItem>
+                      <SelectItem
+                        key="NEEDS_MANUAL_REVIEW"
+                        aria-disabled={
+                          stagingStatusFilter === "NEEDS_MANUAL_REVIEW"
+                        }
+                      >
                         Needs Manual Review
                       </SelectItem>
-                      <SelectItem key="PROCESSED">Processed</SelectItem>
-                      <SelectItem key="PENDING">Pending</SelectItem>
+                      <SelectItem
+                        key="PROCESSED"
+                        aria-disabled={stagingStatusFilter === "PROCESSED"}
+                      >
+                        Processed
+                      </SelectItem>
+                      <SelectItem
+                        key="PENDING"
+                        aria-disabled={stagingStatusFilter === "PENDING"}
+                      >
+                        Pending
+                      </SelectItem>
                     </Select>
                   )}
                 </motion.div>
@@ -537,7 +561,7 @@ export default function PSPPreview({
                         }
                         onSelectionChange={(keys) =>
                           setEntriesStatusFilter(
-                            (Array.from(keys)[0] as string) || "all"
+                            (Array.from(keys)[0] as string) || "all",
                           )
                         }
                         className="w-56"
@@ -546,11 +570,32 @@ export default function PSPPreview({
                           trigger:
                             "focus:ring-2 focus:ring-primary focus:border-primary",
                         }}
+                        disallowEmptySelection
                       >
-                        <SelectItem key="all">All Entry Statuses</SelectItem>
-                        <SelectItem key="EXPECTED">Expected</SelectItem>
-                        <SelectItem key="POSTED">Posted</SelectItem>
-                        <SelectItem key="ARCHIVED">Archived</SelectItem>
+                        <SelectItem
+                          key="all"
+                          aria-disabled={entriesStatusFilter === "all"}
+                        >
+                          All Entry Statuses
+                        </SelectItem>
+                        <SelectItem
+                          key="EXPECTED"
+                          aria-disabled={entriesStatusFilter === "EXPECTED"}
+                        >
+                          Expected
+                        </SelectItem>
+                        <SelectItem
+                          key="POSTED"
+                          aria-disabled={entriesStatusFilter === "POSTED"}
+                        >
+                          Posted
+                        </SelectItem>
+                        <SelectItem
+                          key="ARCHIVED"
+                          aria-disabled={entriesStatusFilter === "ARCHIVED"}
+                        >
+                          Archived
+                        </SelectItem>
                       </Select>
                       <Select
                         aria-label="Filter Account Entries by Recon Status"
@@ -562,21 +607,53 @@ export default function PSPPreview({
                         }
                         onSelectionChange={(keys) =>
                           setEntriesReconStatusFilter(
-                            (Array.from(keys)[0] as string) || "all"
+                            (Array.from(keys)[0] as string) || "all",
                           )
                         }
                         className="w-56"
                         size="sm"
+                        disallowEmptySelection
                         classNames={{
                           trigger:
                             "focus:ring-2 focus:ring-primary focus:border-primary",
                         }}
                       >
-                        <SelectItem key="all">All Recon Statuses</SelectItem>
-                        <SelectItem key="EXPECTED">Expected</SelectItem>
-                        <SelectItem key="POSTED">Posted</SelectItem>
-                        <SelectItem key="MISMATCH">Mismatch</SelectItem>
-                        <SelectItem key="ARCHIVED">Archived</SelectItem>
+                        <SelectItem
+                          key="all"
+                          aria-disabled={entriesReconStatusFilter === "all"}
+                        >
+                          All Recon Statuses
+                        </SelectItem>
+                        <SelectItem
+                          key="EXPECTED"
+                          aria-disabled={
+                            entriesReconStatusFilter === "EXPECTED"
+                          }
+                        >
+                          Expected
+                        </SelectItem>
+                        <SelectItem
+                          key="POSTED"
+                          aria-disabled={entriesReconStatusFilter === "POSTED"}
+                        >
+                          Posted
+                        </SelectItem>
+                        <SelectItem
+                          key="MISMATCH"
+                          aria-disabled={
+                            entriesReconStatusFilter === "MISMATCH"
+                          }
+                        >
+                          Mismatch
+                        </SelectItem>
+                        <SelectItem
+                          key="ARCHIVED"
+                          aria-disabled={
+                            entriesReconStatusFilter === "ARCHIVED"
+                          }
+                        >
+                          Archived
+                        </SelectItem>
                       </Select>
                       <div className="flex items-center gap-2">
                         <Switch

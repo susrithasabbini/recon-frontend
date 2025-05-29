@@ -2,33 +2,29 @@
 
 ## Current Focus
 
-- Implemented changes to prevent same account selection in `file-upload.tsx` and `file-upload-2.tsx` when used in `preview-page.tsx`.
-- Adjusted table row count to 5 and set a minimum height for tables in both file upload components.
+- Modified selectbox behavior globally.
 
 ## Key Decisions & Changes
 
-- **`src/pages/preview-page.tsx`**:
-  - Modified to manage account state for both `FileUploadPage` and `FileUpload2Page`.
-  - Fetches all accounts and passes filtered lists and selection handlers as props to child components.
-  - Passes `isLoading` prop to child components.
-
-- **`src/pages/file-upload.tsx` & `src/pages/file-upload-2.tsx`**:
-  - Refactored to accept `accounts`, `selectedAccount`, `onAccountChange`, `componentId`, and `isLoading` props.
-  - Removed internal account fetching logic.
-  - `rowsPerPage` constant changed from `10` to `5`.
-  - Added `min-h-[350px]` class to `Card` components wrapping the tables to ensure consistent minimum height.
-  - Updated `data-testid` attributes for account select and tables to include `componentId`.
-  - Retained local `loading` state for file upload operations, distinct from the `isLoading` prop.
-
+- **Global Selectbox Behavior**:
+  - Ensured `disallowEmptySelection` prop is active on all `@heroui/select` components.
+  - Disabled the currently selected item within dropdown lists using the `isDisabled` prop on `SelectItem` to prevent re-selection.
 - **Files Modified**:
-  - `src/pages/preview-page.tsx`
-  - `src/pages/file-upload.tsx`
-  - `src/pages/file-upload-2.tsx`
-  - `memory-bank/plans/2025-05-29-preview-page-sync-and-style-plan.md` (created)
-  - `memory-bank/activeContext.md` (this update)
+  - `src/components/merchant-select.tsx`
+  - `src/pages/upload-page.tsx`
+  - `src/pages/account-creation.tsx`
+  - `src/pages/rules-mapping.tsx`
+  - `src/components/color-theme-selector.tsx`
+  - `src/components/file-upload-form.tsx`
+  - `src/pages/bank-preview.tsx`
+  - `src/pages/psp-preview.tsx`
+- **Previous Focus (View Transactions Page)**:
+  - Implemented the new "View Transactions" page (`src/pages/view-transactions-page.tsx`).
+  - Page includes accordion display for transactions, showing versions and entries.
+  - Integrated the new page into `src/routes.tsx` and `src/pages/main-process-flow-page.tsx` (as a new step in `RowSteps`).
+  - Defined necessary TypeScript types in `src/types/transaction.types.ts` and updated `src/types/index.ts`.
 
 ## Next Steps
 
 - Update `memory-bank/progress.md`.
-- Update `memory-bank/file-upload.md` to reflect these changes.
-- Suggest testing the `PreviewPage` to ensure the account selection logic and table styling work as expected.
+- Test the selectbox changes across the application.
