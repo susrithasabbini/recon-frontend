@@ -246,6 +246,9 @@ export default function AccountManagementPage() {
           >
             Account Management
           </h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+            Create and manage your accounts here.
+          </p>
         </motion.div>
 
         <motion.div variants={scaleIn} initial="hidden" animate="visible">

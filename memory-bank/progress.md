@@ -1,5 +1,38 @@
 ## 2025-05-29
 
+### Task: Implement "View Transactions" Page with Accordion
+
+- **Status**: Completed
+- **Summary**:
+  - Created a new page `src/pages/view-transactions-page.tsx` to display merchant transactions.
+  - Implemented data fetching from `/merchants/{merchant_id}/transactions`.
+  - Used `@heroui/accordion` to display each transaction as an expandable item.
+  - The accordion item header (title) displays: shortened `logical_transaction_id`, amount, from/to account names, and top-level transaction status.
+  - Expanded content shows transaction versions, sorted by version number (descending). Each version displays its status and a table of its entries.
+  - The entries table columns are: Entry ID, Amount, Account ID, Type, and Status.
+  - Added necessary TypeScript types to `src/types/transaction.types.ts` and exported them via `src/types/index.ts`.
+  - Added a route for the new page in `src/routes.tsx` at `/transactions`.
+  - Integrated "View Transactions" as a new step in the `RowSteps` component within `src/pages/main-process-flow-page.tsx`.
+  - Addressed initial import issues for HeroUI components (`Accordion` from `@heroui/accordion`, `Card` and `CardBody` from `@heroui/card`).
+  - Corrected usage of `selectedMerchant` (which is an ID string) in the API call.
+- **Files Created**:
+  - `src/types/transaction.types.ts`
+  - `src/pages/view-transactions-page.tsx`
+- **Files Modified**:
+  - `src/types/index.ts`
+  - `src/routes.tsx`
+  - `src/pages/main-process-flow-page.tsx`
+  - `memory-bank/plans/2025-05-29-transactions-accordion-plan.md` (created and updated)
+  - `memory-bank/activeContext.md` (updated)
+  - `memory-bank/progress.md` (this entry)
+- **Issues Encountered**:
+  - Initial TypeScript errors due to incorrect import paths for HeroUI components (`Accordion`, `Card`, `CardHeader`, `CardTitle`). Resolved by using correct packages (`@heroui/accordion`, `@heroui/card`) and simulating CardHeader/Title where direct exports weren't obvious.
+  - TypeScript error `Property 'merchant_id' does not exist on type 'string'` for `selectedMerchant`. Corrected to use `selectedMerchant` directly as the ID.
+
+---
+
+## 2025-05-29
+
 ### Task: Sync Account Selection and Style Tables in File Upload Components
 
 - **Status**: Completed

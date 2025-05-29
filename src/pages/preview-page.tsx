@@ -6,6 +6,12 @@ import type { Account } from "@/types";
 import { addToast } from "@heroui/toast";
 import { Button } from "@heroui/button";
 import api from "@/config/axios";
+import { motion } from "framer-motion";
+import { title as titlePrimitive } from "@/components/primitives";
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+};
 
 export const PreviewPage = () => {
   const { selectedMerchant, getAccounts } = useDefaultContext();
@@ -93,6 +99,20 @@ export const PreviewPage = () => {
 
   return (
     <div className="w-full px-4 md:px-6 lg:px-8">
+      ``
+      <motion.div
+        className="text-center mb-10"
+        variants={fadeInUp}
+        initial="hidden"
+        animate="visible"
+      >
+        <h1 className={titlePrimitive({ color: "primary", size: "lg" })}>
+          Reconciliation
+        </h1>
+        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+          Preview the reconciliation process before running it.
+        </p>
+      </motion.div>
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 mt-10 max-w-[2000px] mx-auto">
         <div className="w-full lg:w-1/2">
           <PSPPreviewPage

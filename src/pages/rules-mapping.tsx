@@ -231,6 +231,9 @@ export default function RulesMappingPage() {
         <h1 className={clsx(title({ size: "lg", color: "primary" }), "mb-2")}>
           Rules Mapping
         </h1>
+        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+          Create and manage your mappings here.
+        </p>
       </motion.div>
 
       <motion.div variants={scaleIn} initial="hidden" animate="visible">

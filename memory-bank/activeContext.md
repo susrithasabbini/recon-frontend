@@ -1,34 +1,28 @@
 # Active Context - 2025-05-29
 
 ## Current Focus
-
-- Implemented changes to prevent same account selection in `file-upload.tsx` and `file-upload-2.tsx` when used in `preview-page.tsx`.
-- Adjusted table row count to 5 and set a minimum height for tables in both file upload components.
+- Implemented the new "View Transactions" page (`src/pages/view-transactions-page.tsx`).
+- Page includes accordion display for transactions, showing versions and entries.
+- Integrated the new page into `src/routes.tsx` and `src/pages/main-process-flow-page.tsx` (as a new step in `RowSteps`).
+- Defined necessary TypeScript types in `src/types/transaction.types.ts` and updated `src/types/index.ts`.
 
 ## Key Decisions & Changes
-
-- **`src/pages/preview-page.tsx`**:
-  - Modified to manage account state for both `FileUploadPage` and `FileUpload2Page`.
-  - Fetches all accounts and passes filtered lists and selection handlers as props to child components.
-  - Passes `isLoading` prop to child components.
-
-- **`src/pages/file-upload.tsx` & `src/pages/file-upload-2.tsx`**:
-  - Refactored to accept `accounts`, `selectedAccount`, `onAccountChange`, `componentId`, and `isLoading` props.
-  - Removed internal account fetching logic.
-  - `rowsPerPage` constant changed from `10` to `5`.
-  - Added `min-h-[350px]` class to `Card` components wrapping the tables to ensure consistent minimum height.
-  - Updated `data-testid` attributes for account select and tables to include `componentId`.
-  - Retained local `loading` state for file upload operations, distinct from the `isLoading` prop.
-
-- **Files Modified**:
-  - `src/pages/preview-page.tsx`
-  - `src/pages/file-upload.tsx`
-  - `src/pages/file-upload-2.tsx`
-  - `memory-bank/plans/2025-05-29-preview-page-sync-and-style-plan.md` (created)
-  - `memory-bank/activeContext.md` (this update)
+- **`src/types/transaction.types.ts`**: Created to define interfaces for `Transaction`, `TransactionVersion`, `TransactionEntry`, and `TransactionAccountInfo`.
+- **`src/types/index.ts`**: Updated to export new transaction types.
+- **`src/pages/view-transactions-page.tsx`**:
+    - Created with data fetching logic for `/merchants/{merchant_id}/transactions`.
+    - Uses `@heroui/accordion` for displaying transactions.
+    - Each `AccordionItem` title shows: `logical_transaction_id` (shortened), amount, from/to account names, and status.
+    - Expanded content shows versions, each with a table of entries (Entry ID, Amount, Account ID, Type, Status).
+    - Handles loading, error, and no-merchant-selected states.
+- **`src/routes.tsx`**: Added a new route `/transactions` for `ViewTransactionsPage`.
+- **`src/pages/main-process-flow-page.tsx`**:
+    - Added "View Transactions" to `pageSteps`.
+    - Added `ViewTransactionsPage` to `stepContentComponents`.
+- **HeroUI Accordion**: Confirmed it's available via `npx heroui-cli@latest add accordion` and imported from `@heroui/accordion`.
+- **Card Components**: Imports for `Card`, `CardBody` corrected to `@heroui/card`. `CardHeader` and `CardTitle` simulated with basic HTML/Tailwind as direct HeroUI exports were not found in `primitives` or common `react` package.
 
 ## Next Steps
-
 - Update `memory-bank/progress.md`.
-- Update `memory-bank/file-upload.md` to reflect these changes.
-- Suggest testing the `PreviewPage` to ensure the account selection logic and table styling work as expected.
+- Create `memory-bank/view-transactions.md` for detailed page documentation.
+- Test the new "View Transactions" page functionality and appearance.

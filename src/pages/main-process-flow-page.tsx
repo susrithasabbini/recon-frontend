@@ -7,6 +7,7 @@ import MerchantManagementPage from "./merchant-creation";
 import NavigationButtons from "@/components/navigation-buttons";
 import { PreviewPage } from "./preview-page";
 import UploadPage from "./upload-page";
+import ViewTransactionsPage from "@/pages/view-transactions-page"; // Import the new page
 
 const pageSteps = [
   { title: "Merchant Creation" },
@@ -14,6 +15,7 @@ const pageSteps = [
   { title: "Rules Mapping" },
   { title: "File Upload" },
   { title: "Reconciliation" },
+  { title: "View Transactions" }, // Added new step
 ];
 
 // Array of components to render for each step
@@ -23,6 +25,7 @@ const stepContentComponents = [
   RulesMappingPage,
   UploadPage,
   PreviewPage,
+  ViewTransactionsPage, // Added new page component
 ];
 
 const MainProcessFlowPage: React.FC = () => {

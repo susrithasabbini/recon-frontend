@@ -5,3 +5,4 @@ export * from "./merchant.types";
 export * from "./account.types";
 export * from "./rule.types";
 export * from "./file.types";
+export * from "./transaction.types";
