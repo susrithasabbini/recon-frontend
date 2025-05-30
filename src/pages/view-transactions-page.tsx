@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Card, CardBody } from "@heroui/card";
@@ -12,9 +12,10 @@ import {
 } from "@heroui/table";
 import { ChevronRightIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useDefaultContext } from "@/contexts/default-context";
-import { title as titlePrimitive } from "@/components/primitives";
+import { title as pageTitleStyle } from "@/components/primitives";
 import { Transaction, TransactionVersion, TransactionEntry } from "@/types";
 import api from "@/config/axios";
+import clsx from "clsx";
 
 const PageLoader = () => (
   <div className="flex justify-center items-center h-64">
@@ -22,7 +23,7 @@ const PageLoader = () => (
   </div>
 );
 
-const ViewTransactionsPage: React.FC = () => {
+export default function ViewTransactionsPage() {
   const { selectedMerchant } = useDefaultContext();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -50,7 +51,7 @@ const ViewTransactionsPage: React.FC = () => {
       setError(null);
       try {
         const response = await api.get<Transaction[]>(
-          `/merchants/${selectedMerchant}/transactions`,
+          `/merchants/${selectedMerchant}/transactions`
         );
         setTransactions(response.data);
       } catch (err) {
@@ -58,7 +59,7 @@ const ViewTransactionsPage: React.FC = () => {
         setError(
           err instanceof Error
             ? err.message
-            : "An unknown error occurred while fetching transactions.",
+            : "An unknown error occurred while fetching transactions."
         );
         setTransactions([]);
       } finally {
@@ -71,13 +72,18 @@ const ViewTransactionsPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <motion.div
-        className="text-center mb-10"
         variants={fadeInUp}
         initial="hidden"
         animate="visible"
+        className="text-center mb-12 sm:mb-16"
       >
-        <h1 className={titlePrimitive({ color: "primary", size: "lg" })}>
-          Transactions
+        <h1
+          className={clsx(
+            pageTitleStyle({ size: "lg", color: "primary" }),
+            "mb-2"
+          )}
+        >
+          Transaction Management
         </h1>
         <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
           Review and manage your merchant transactions.
@@ -129,34 +135,41 @@ const ViewTransactionsPage: React.FC = () => {
         <motion.div variants={scaleIn} initial="hidden" animate="visible">
           <Card className="shadow-lg border border-gray-100 dark:border-gray-800">
             <CardBody className="p-2 sm:p-4">
-              <Accordion selectionMode="multiple">
+              {/* Headers */}
+              <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto_minmax(0,1.2fr)_minmax(0,1fr)] w-full gap-x-4 items-center px-10 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 border-b-[0.5px] border-gray-200 dark:border-gray-700">
+                <span className="text-center">Transaction ID</span>
+                <span className="text-center">Amount</span>
+                <span className="text-center">From Account</span>
+                <span className="flex-shrink-0"></span>
+                <span className="text-center">To Account</span>
+                <span className="text-center">Status</span>
+              </div>
+              <Accordion selectionMode="single">
                 {transactions.map((transaction: Transaction) => (
                   <AccordionItem
                     key={transaction.logical_transaction_id}
                     aria-label={`Transaction ${transaction.logical_transaction_id}`}
                     classNames={{
-                      indicator: "hidden", // Attempt to hide default indicator
-                      trigger: "py-3", // Add padding to trigger
+                      indicator: "hidden",
+                      trigger: "py-3",
                     }}
                     title={
-                      <div className="flex items-center w-full text-sm px-2">
+                      <div className="flex items-center w-full text-sm">
                         <ChevronRightIcon className="h-5 w-5 mr-3 flex-shrink-0 transition-transform ui-open:rotate-90" />
-                        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto_minmax(0,1.2fr)_minmax(0,1fr)] w-full gap-x-4 items-center">
-                          {" "}
-                          {/* Increased gap-x-4 */}
+                        <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto_minmax(0,1.2fr)_minmax(0,1fr)] w-full gap-x-4 items-center pr-6">
                           <span
-                            className="font-semibold truncate"
+                            className="font-semibold truncate text-center"
                             title={transaction.logical_transaction_id}
                           >
                             {transaction.logical_transaction_id
                               .split("_")
                               .pop()}
                           </span>
-                          <span className="text-right truncate">
+                          <span className="truncate text-center">
                             {transaction.amount} {transaction.currency}
                           </span>
                           <span
-                            className="truncate text-right"
+                            className="truncate text-center"
                             title={
                               transaction.from_accounts[0]?.account_name ||
                               "N/A"
@@ -167,16 +180,16 @@ const ViewTransactionsPage: React.FC = () => {
                           </span>
                           <ArrowRightIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                           <span
-                            className="truncate text-left"
+                            className="truncate text-center"
                             title={
                               transaction.to_accounts[0]?.account_name || "N/A"
                             }
                           >
                             {transaction.to_accounts[0]?.account_name || "N/A"}
                           </span>
-                          <span className="text-right">
+                          <span className="text-center">
                             <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                 transaction.status === "POSTED"
                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                   : transaction.status === "EXPECTED"
@@ -222,34 +235,46 @@ const ViewTransactionsPage: React.FC = () => {
                             {version.entries.length > 0 ? (
                               <Table
                                 aria-label={`Entries for version ${version.version}`}
+                                classNames={{
+                                  base: "w-full",
+                                  table: "min-w-full",
+                                  th: "px-4 py-2",
+                                  td: "px-4 py-2",
+                                }}
                               >
                                 <TableHeader>
-                                  <TableColumn className="text-xs">
+                                  <TableColumn className="text-xs w-[300px]">
                                     Entry ID
                                   </TableColumn>
-                                  <TableColumn className="text-xs">
+                                  <TableColumn className="text-xs w-[120px]">
                                     Amount
                                   </TableColumn>
                                   <TableColumn className="text-xs">
                                     Account Name
                                   </TableColumn>
-                                  <TableColumn className="text-xs">
+                                  <TableColumn className="text-xs w-[100px]">
                                     Type
                                   </TableColumn>
-                                  <TableColumn className="text-xs text-center">
+                                  <TableColumn className="text-xs w-[100px] text-center">
                                     Status
                                   </TableColumn>
                                 </TableHeader>
-                                <TableBody items={version.entries}>
+                                <TableBody
+                                  items={[...version.entries].sort(
+                                    (a, b) =>
+                                      new Date(b.created_at).getTime() -
+                                      new Date(a.created_at).getTime()
+                                  )}
+                                >
                                   {(entry: TransactionEntry) => (
                                     <TableRow key={entry.entry_id}>
                                       <TableCell
-                                        className="text-xs truncate"
+                                        className="text-xs font-mono whitespace-nowrap"
                                         title={entry.entry_id}
                                       >
                                         {entry.entry_id}
                                       </TableCell>
-                                      <TableCell className="text-xs">
+                                      <TableCell className="text-xs whitespace-nowrap">
                                         {entry.amount} {entry.currency}
                                       </TableCell>
                                       <TableCell
@@ -258,7 +283,7 @@ const ViewTransactionsPage: React.FC = () => {
                                       >
                                         {entry.account.account_name}
                                       </TableCell>
-                                      <TableCell className="text-xs">
+                                      <TableCell className="text-xs whitespace-nowrap">
                                         {entry.entry_type}
                                       </TableCell>
                                       <TableCell className="text-xs text-center">
@@ -297,6 +322,4 @@ const ViewTransactionsPage: React.FC = () => {
       )}
     </div>
   );
-};
-
-export default ViewTransactionsPage;
+}

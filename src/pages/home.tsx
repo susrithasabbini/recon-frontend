@@ -1,6 +1,5 @@
 import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
-import DefaultLayout from "@/layouts/default";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { title, subtitle } from "@/components/primitives";
@@ -170,51 +169,49 @@ function HeroIllustration() {
 
 export default function IndexPage() {
   return (
-    <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-16 transition-colors duration-300 h-full">
-        {/* Hero Illustration */}
-        <HeroIllustration />
-        {/* Animated Intro Section */}
-        <motion.div
-          className="max-w-2xl text-center"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+    <section className="flex flex-col items-center justify-center gap-16 transition-colors duration-300 h-full">
+      {/* Hero Illustration */}
+      <HeroIllustration />
+      {/* Animated Intro Section */}
+      <motion.div
+        className="max-w-2xl text-center"
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        <h1 className={clsx(title({ size: "md", color: "primary" }))}>
+          Accounting & Reconciliation Tool
+        </h1>
+        <p className={subtitle()}>
+          Our streamlined process guides you through setting up accounts,
+          mapping rules, and uploading files for efficient reconciliation. Click
+          below to begin.
+        </p>
+      </motion.div>
+      {/* Animated Divider */}
+      <motion.div
+        className="w-full max-w-2xl h-2 bg-gradient-to-r from-blue-200/60 via-blue-400/30 to-blue-200/60 dark:from-blue-900/40 dark:via-blue-700/30 dark:to-blue-900/40 rounded-full"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+        style={{ transformOrigin: "center" }}
+      />
+      {/* Get Started Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <Button
+          as={Link}
+          href="/process-flow"
+          color="primary"
+          size="lg"
+          className="px-8 py-4 text-lg font-semibold"
         >
-          <h1 className={clsx(title({ size: "md", color: "primary" }))}>
-            Accounting & Reconciliation Tool
-          </h1>
-          <p className={subtitle()}>
-            Our streamlined process guides you through setting up accounts,
-            mapping rules, and uploading files for efficient reconciliation.
-            Click below to begin.
-          </p>
-        </motion.div>
-        {/* Animated Divider */}
-        <motion.div
-          className="w-full max-w-2xl h-2 bg-gradient-to-r from-blue-200/60 via-blue-400/30 to-blue-200/60 dark:from-blue-900/40 dark:via-blue-700/30 dark:to-blue-900/40 rounded-full"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
-          style={{ transformOrigin: "center" }}
-        />
-        {/* Get Started Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Button
-            as={Link}
-            href="/process-flow"
-            color="primary"
-            size="lg"
-            className="px-8 py-4 text-lg font-semibold"
-          >
-            Get Started
-          </Button>
-        </motion.div>
-      </section>
-    </DefaultLayout>
+          Get Started
+        </Button>
+      </motion.div>
+    </section>
   );
 }
