@@ -1,3 +1,5 @@
+import type { Account } from "@/types";
+
 import { useState, useMemo, useEffect } from "react";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
@@ -29,9 +31,9 @@ import { Select, SelectItem } from "@heroui/select"; // Keep for create/edit mod
 import { Tooltip } from "@heroui/tooltip";
 import { addToast } from "@heroui/toast";
 import clsx from "clsx";
+
 import { title as pageTitleStyle } from "@/components/primitives";
 import { useDefaultContext } from "@/contexts/default-context";
-import type { Account } from "@/types";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -71,6 +73,7 @@ export default function AccountManagementPage() {
     "DEBIT_NORMAL" | "CREDIT_NORMAL"
   >("DEBIT_NORMAL");
   const [newAccountCurrency, setNewAccountCurrency] = useState("USD");
+  const [newInitialBalance, setNewInitialBalance] = useState("");
   const [createError, setCreateError] = useState("");
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
@@ -89,11 +92,13 @@ export default function AccountManagementPage() {
     const fetchAccounts = async () => {
       if (!selectedMerchant) {
         setAccounts([]); // Clear accounts if no merchant is selected
+
         return;
       }
       setIsLoading(true);
       try {
         const data = await getAccounts();
+
         setAccounts(data);
       } catch (error) {
         addToast({
@@ -116,14 +121,15 @@ export default function AccountManagementPage() {
   const filteredAccounts = useMemo(
     () =>
       accounts.filter((acc) =>
-        acc.account_name.toLowerCase().includes(searchTerm.toLowerCase())
+        acc.account_name.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
-    [accounts, searchTerm]
+    [accounts, searchTerm],
   );
 
   const handleCreateAccount = async () => {
     if (!newAccountName.trim()) {
       setCreateError("Account name is required");
+
       return;
     }
     if (!selectedMerchant) {
@@ -131,6 +137,7 @@ export default function AccountManagementPage() {
         title: "Please select a merchant first",
         variant: "flat",
       });
+
       return;
     }
 
@@ -141,18 +148,22 @@ export default function AccountManagementPage() {
         account_name: newAccountName.trim(),
         account_type: newAccountType,
         currency: newAccountCurrency,
+        initial_balance: parseFloat(newInitialBalance) || 0,
       });
       setNewAccountName("");
       setNewAccountType("DEBIT_NORMAL");
       setNewAccountCurrency("USD");
+      setNewInitialBalance("");
       setIsCreateDialogOpen(false);
       addToast({ title: "Account created successfully" });
       // Refetch accounts
       const data = await getAccounts();
+
       setAccounts(data);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred.";
+
       setCreateError(errorMessage);
       addToast({
         title: "Failed to create account",
@@ -184,12 +195,13 @@ export default function AccountManagementPage() {
           // Include other fields if they are editable
           // account_type: editAccountType,
           // currency: editAccountCurrency,
-        }
+        },
       );
       setAccountToEdit(null);
       addToast({ title: "Account updated successfully" });
       // Refetch accounts
       const data = await getAccounts();
+
       setAccounts(data);
     } catch (error) {
       addToast({
@@ -216,6 +228,7 @@ export default function AccountManagementPage() {
       setAccountToDelete(null);
       // Refetch accounts
       const data = await getAccounts();
+
       setAccounts(data);
     } catch (error) {
       addToast({
@@ -233,15 +246,15 @@ export default function AccountManagementPage() {
     <>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <motion.div
-          variants={fadeInUp}
-          initial="hidden"
           animate="visible"
           className="text-center mb-12 sm:mb-16"
+          initial="hidden"
+          variants={fadeInUp}
         >
           <h1
             className={clsx(
               pageTitleStyle({ size: "lg", color: "primary" }),
-              "mb-2"
+              "mb-2",
             )}
           >
             Account Management
@@ -251,7 +264,7 @@ export default function AccountManagementPage() {
           </p>
         </motion.div>
 
-        <motion.div variants={scaleIn} initial="hidden" animate="visible">
+        <motion.div animate="visible" initial="hidden" variants={scaleIn}>
           <Card className="border border-gray-200 dark:border-gray-700 shadow-lg">
             <CardBody className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
@@ -264,20 +277,20 @@ export default function AccountManagementPage() {
                   <div className="relative flex-grow sm:flex-grow-0">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                     <Input
-                      placeholder="Search accounts..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 w-full"
                       classNames={{ inputWrapper: "h-10" }}
                       disabled={!selectedMerchant}
+                      placeholder="Search accounts..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <Button
-                    color="primary"
-                    onPress={() => setIsCreateDialogOpen(true)}
-                    className="text-white flex-shrink-0"
-                    startContent={<PlusIcon className="w-4 h-4 mr-1 sm:mr-2" />}
                     aria-disabled={!selectedMerchant}
+                    className="text-white flex-shrink-0"
+                    color="primary"
+                    startContent={<PlusIcon className="w-4 h-4 mr-1 sm:mr-2" />}
+                    onPress={() => setIsCreateDialogOpen(true)}
                   >
                     New Account
                   </Button>
@@ -311,9 +324,9 @@ export default function AccountManagementPage() {
                           : "No accounts yet for this merchant."}
                       </p>
                       <Button
-                        onPress={() => setIsCreateDialogOpen(true)}
-                        variant="light"
                         color="primary"
+                        variant="light"
+                        onPress={() => setIsCreateDialogOpen(true)}
                       >
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Create Account
@@ -351,12 +364,12 @@ export default function AccountManagementPage() {
                         </TableColumn>
                       </TableHeader>
                       <TableBody
-                        items={filteredAccounts}
                         emptyContent={
                           <div className="text-center p-4">
                             No accounts to display.
                           </div>
                         }
+                        items={filteredAccounts}
                       >
                         {(account) => (
                           <TableRow
@@ -369,8 +382,8 @@ export default function AccountManagementPage() {
                                   <BanknotesIcon className="w-5 h-5 text-primary" />
                                 </div>
                                 <span
-                                  title={account.account_name}
                                   className="truncate"
+                                  title={account.account_name}
                                 >
                                   {account.account_name}
                                 </span>
@@ -399,9 +412,9 @@ export default function AccountManagementPage() {
                                 <Tooltip content="Edit Account" placement="top">
                                   <Button
                                     isIconOnly
-                                    variant="light"
-                                    size="sm"
                                     className="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary-400"
+                                    size="sm"
+                                    variant="light"
                                     onPress={() => openEditModal(account)}
                                   >
                                     <PencilSquareIcon className="w-5 h-5" />
@@ -413,9 +426,9 @@ export default function AccountManagementPage() {
                                 >
                                   <Button
                                     isIconOnly
-                                    variant="light"
-                                    size="sm"
                                     className="text-gray-500 hover:text-danger dark:text-gray-400 dark:hover:text-danger-400"
+                                    size="sm"
+                                    variant="light"
                                     onPress={() =>
                                       openDeleteConfirmModal(account)
                                     }
@@ -439,14 +452,15 @@ export default function AccountManagementPage() {
       {/* Create Account Modal */}
       <Modal
         isOpen={isCreateDialogOpen}
+        size="md"
         onClose={() => {
           setIsCreateDialogOpen(false);
           setNewAccountName("");
           setNewAccountType("DEBIT_NORMAL");
           setNewAccountCurrency("USD");
+          setNewInitialBalance("");
           setCreateError("");
         }}
-        size="md"
       >
         <ModalContent>
           <ModalHeader>Create New Account</ModalHeader>
@@ -459,17 +473,17 @@ export default function AccountManagementPage() {
             <ModalBody className="space-y-4">
               <div>
                 <label
-                  htmlFor="new-account-name"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  htmlFor="new-account-name"
                 >
                   Account Name
                 </label>
                 <Input
+                  autoFocus
                   id="new-account-name"
+                  placeholder="Enter account name"
                   value={newAccountName}
                   onChange={(e) => setNewAccountName(e.target.value)}
-                  placeholder="Enter account name"
-                  autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleCreateAccount();
                   }}
@@ -480,22 +494,22 @@ export default function AccountManagementPage() {
               </div>
               <div>
                 <label
-                  htmlFor="new-account-type"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  htmlFor="new-account-type"
                 >
                   Account Type
                 </label>
                 <Select
-                  id="new-account-type"
+                  disallowEmptySelection
                   aria-label="Account Type"
+                  className="w-full"
+                  id="new-account-type"
                   selectedKeys={[newAccountType]}
                   onChange={(e) =>
                     setNewAccountType(
-                      e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL"
+                      e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL",
                     )
                   }
-                  disallowEmptySelection
-                  className="w-full"
                 >
                   <SelectItem
                     key="DEBIT_NORMAL"
@@ -513,18 +527,18 @@ export default function AccountManagementPage() {
               </div>
               <div>
                 <label
-                  htmlFor="new-account-currency"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  htmlFor="new-account-currency"
                 >
                   Currency
                 </label>
                 <Select
-                  id="new-account-currency"
+                  disallowEmptySelection
                   aria-label="Currency"
+                  className="w-full"
+                  id="new-account-currency"
                   selectedKeys={[newAccountCurrency]}
                   onChange={(e) => setNewAccountCurrency(e.target.value)}
-                  disallowEmptySelection
-                  className="w-full"
                 >
                   <SelectItem
                     key="USD"
@@ -547,26 +561,43 @@ export default function AccountManagementPage() {
                   {/* Add more currencies as needed */}
                 </Select>
               </div>
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  htmlFor="new-initial-balance"
+                >
+                  Initial Balance
+                </label>
+                <Input
+                  id="new-initial-balance"
+                  placeholder="0.00"
+                  step="0.01"
+                  type="number"
+                  value={newInitialBalance}
+                  onChange={(e) => setNewInitialBalance(e.target.value)}
+                />
+              </div>
             </ModalBody>
             <ModalFooter>
               <Button
+                type="button"
                 variant="light"
                 onPress={() => {
                   setIsCreateDialogOpen(false);
                   setNewAccountName("");
                   setNewAccountType("DEBIT_NORMAL");
                   setNewAccountCurrency("USD");
+                  setNewInitialBalance("");
                   setCreateError("");
                 }}
-                type="button"
               >
                 Cancel
               </Button>
               <Button
                 color="primary"
-                type="submit"
-                isLoading={isCreatingAccount}
                 disabled={!newAccountName.trim() || !selectedMerchant}
+                isLoading={isCreatingAccount}
+                type="submit"
               >
                 Create Account
               </Button>
@@ -579,8 +610,8 @@ export default function AccountManagementPage() {
       {accountToEdit && (
         <Modal
           isOpen={!!accountToEdit}
-          onClose={() => setAccountToEdit(null)}
           size="md"
+          onClose={() => setAccountToEdit(null)}
         >
           <ModalContent>
             <ModalHeader>Edit Account</ModalHeader>
@@ -593,17 +624,17 @@ export default function AccountManagementPage() {
               <ModalBody className="space-y-4">
                 <div>
                   <label
-                    htmlFor="edit-account-name"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    htmlFor="edit-account-name"
                   >
                     Account Name
                   </label>
                   <Input
+                    autoFocus
                     id="edit-account-name"
+                    placeholder="Enter account name"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Enter account name"
-                    autoFocus
                   />
                 </div>
                 {/* 
@@ -644,17 +675,17 @@ export default function AccountManagementPage() {
               </ModalBody>
               <ModalFooter>
                 <Button
+                  type="button"
                   variant="light"
                   onPress={() => setAccountToEdit(null)}
-                  type="button"
                 >
                   Cancel
                 </Button>
                 <Button
                   color="primary"
-                  type="submit"
-                  isLoading={isUpdatingAccount}
                   disabled={!editName.trim()}
+                  isLoading={isUpdatingAccount}
+                  type="submit"
                 >
                   Save Changes
                 </Button>
@@ -668,8 +699,8 @@ export default function AccountManagementPage() {
       {accountToDelete && (
         <Modal
           isOpen={!!accountToDelete}
-          onClose={() => setAccountToDelete(null)}
           size="md"
+          onClose={() => setAccountToDelete(null)}
         >
           <ModalContent>
             <ModalHeader>Delete Account</ModalHeader>
@@ -681,16 +712,16 @@ export default function AccountManagementPage() {
             </ModalBody>
             <ModalFooter>
               <Button
+                type="button"
                 variant="light"
                 onPress={() => setAccountToDelete(null)}
-                type="button"
               >
                 Cancel
               </Button>
               <Button
                 color="danger"
-                onPress={handleDeleteAccount}
                 isLoading={isDeletingAccount}
+                onPress={handleDeleteAccount}
               >
                 Delete
               </Button>
