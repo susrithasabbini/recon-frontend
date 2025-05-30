@@ -231,7 +231,7 @@ const ViewTransactionsPage: React.FC = () => {
                                     Amount
                                   </TableColumn>
                                   <TableColumn className="text-xs">
-                                    Account ID
+                                    Account Name
                                   </TableColumn>
                                   <TableColumn className="text-xs">
                                     Type
@@ -254,9 +254,9 @@ const ViewTransactionsPage: React.FC = () => {
                                       </TableCell>
                                       <TableCell
                                         className="text-xs truncate"
-                                        title={entry.account_id}
+                                        title={entry.account.account_name}
                                       >
-                                        {entry.account_id}
+                                        {entry.account.account_name}
                                       </TableCell>
                                       <TableCell className="text-xs">
                                         {entry.entry_type}
