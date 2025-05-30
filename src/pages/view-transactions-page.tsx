@@ -16,6 +16,7 @@ import { title as pageTitleStyle } from "@/components/primitives";
 import { Transaction, TransactionVersion, TransactionEntry } from "@/types";
 import api from "@/config/axios";
 import clsx from "clsx";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const PageLoader = () => (
   <div className="flex justify-center items-center h-64">
@@ -93,14 +94,29 @@ export default function ViewTransactionsPage() {
       {!selectedMerchant ? (
         <motion.div variants={scaleIn} initial="hidden" animate="visible">
           <Card className="mt-8 text-center">
-            <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold">No Merchant Selected</h2>
-            </div>
-            <CardBody>
-              <p>
-                Please select a merchant from the navbar to view transactions.
+            <motion.div
+              key="empty"
+              variants={scaleIn}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="flex flex-col items-center justify-center gap-3 text-center p-10"
+              data-testid="empty-state"
+            >
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="p-4 bg-gray-50 dark:bg-gray-800 rounded-full"
+              >
+                <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+              </motion.div>
+              <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                Please select a merchant first
               </p>
-            </CardBody>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">
+                Select a merchant to view their transactions.
+              </p>
+            </motion.div>
           </Card>
         </motion.div>
       ) : isLoading ? (
