@@ -432,7 +432,7 @@ export default function FileUploadPage() {
                       initial="hidden"
                       animate="visible"
                       exit="hidden"
-                      className="flex flex-col items-center justify-center gap-3 text-center"
+                      className="flex flex-col items-center justify-center gap-3 text-center p-10"
                       data-testid="empty-state"
                     >
                       <motion.div
