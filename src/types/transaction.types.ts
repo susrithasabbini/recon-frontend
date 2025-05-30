@@ -1,6 +1,12 @@
 export interface TransactionEntry {
   entry_id: string;
-  account_id: string;
+  account_id?: string;
+  account: {
+    account_id: string;
+    merchant_id: string;
+    account_name: string;
+    account_type: string;
+  };
   transaction_id: string;
   entry_type: "DEBIT" | "CREDIT";
   amount: string;
