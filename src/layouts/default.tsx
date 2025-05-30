@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar";
+import { Sidebar } from "@/components/sidebar";
 
 export default function DefaultLayout({
   children,
@@ -6,13 +6,9 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-col h-screen">
-      <Navbar />
-      <main className="flex-grow py-10">
-        {" "}
-        {/* Removed container, mx-auto, px-20 and py-10 */}
-        {children}
-      </main>
+    <div className="relative flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

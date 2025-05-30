@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import RowSteps from "@/components/row-steps";
 import AccountCreationPage from "./account-creation";
 import RulesMappingPage from "./rules-mapping";
-import DefaultLayout from "@/layouts/default";
 import MerchantManagementPage from "./merchant-creation";
 import NavigationButtons from "@/components/navigation-buttons";
 import { PreviewPage } from "./preview-page";
@@ -28,13 +27,13 @@ const stepContentComponents = [
   ViewTransactionsPage, // Added new page component
 ];
 
-const MainProcessFlowPage: React.FC = () => {
+export default function MainProcessFlowPage() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const CurrentStepComponent = stepContentComponents[currentStep];
 
   return (
-    <DefaultLayout>
+    <div className="container mx-auto px-4 py-8">
       <div className="mx-10 flex flex-col items-center gap-y-6">
         <div className="w-full flex justify-center">
           <RowSteps
@@ -52,8 +51,6 @@ const MainProcessFlowPage: React.FC = () => {
           totalPages={pageSteps.length}
         />
       </div>
-    </DefaultLayout>
+    </div>
   );
-};
-
-export default MainProcessFlowPage;
+}
