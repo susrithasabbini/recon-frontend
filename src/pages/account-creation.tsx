@@ -116,9 +116,9 @@ export default function AccountManagementPage() {
   const filteredAccounts = useMemo(
     () =>
       accounts.filter((acc) =>
-        acc.account_name.toLowerCase().includes(searchTerm.toLowerCase()),
+        acc.account_name.toLowerCase().includes(searchTerm.toLowerCase())
       ),
-    [accounts, searchTerm],
+    [accounts, searchTerm]
   );
 
   const handleCreateAccount = async () => {
@@ -184,7 +184,7 @@ export default function AccountManagementPage() {
           // Include other fields if they are editable
           // account_type: editAccountType,
           // currency: editAccountCurrency,
-        },
+        }
       );
       setAccountToEdit(null);
       addToast({ title: "Account updated successfully" });
@@ -241,7 +241,7 @@ export default function AccountManagementPage() {
           <h1
             className={clsx(
               pageTitleStyle({ size: "lg", color: "primary" }),
-              "mb-2",
+              "mb-2"
             )}
           >
             Account Management
@@ -338,7 +338,13 @@ export default function AccountManagementPage() {
                           Currency
                         </TableColumn>
                         <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Balance
+                          Expected Balance
+                        </TableColumn>
+                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Posted Balance
+                        </TableColumn>
+                        <TableColumn className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Variance
                         </TableColumn>
                         <TableColumn className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Actions
@@ -379,7 +385,14 @@ export default function AccountManagementPage() {
                               {account.currency}
                             </TableCell>
                             <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {account.available_balance}
+                              {account.pending_balance}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {account.posted_balance}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {parseInt(account.pending_balance) -
+                                parseInt(account.posted_balance)}
                             </TableCell>
                             <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-right">
                               <div className="flex items-center justify-end gap-1 sm:gap-2">
@@ -478,7 +491,7 @@ export default function AccountManagementPage() {
                   selectedKeys={[newAccountType]}
                   onChange={(e) =>
                     setNewAccountType(
-                      e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL",
+                      e.target.value as "DEBIT_NORMAL" | "CREDIT_NORMAL"
                     )
                   }
                   disallowEmptySelection
