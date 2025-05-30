@@ -5,6 +5,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
+
 import api from "@/config/axios";
 
 interface Merchant {
@@ -21,9 +22,12 @@ interface Account {
   account_name: string;
   account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
   currency: string;
+  initial_balance: string;
   posted_balance: string;
   pending_balance: string;
   available_balance: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface DefaultContextType {
@@ -48,6 +52,7 @@ interface DefaultContextType {
     account_name: string;
     account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
     currency: string;
+    initial_balance: number;
   }) => Promise<Account>;
   getAccounts: () => Promise<Account[]>;
   deleteAccount: (accountId: string) => Promise<void>;
@@ -71,6 +76,7 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
     const fetchMerchants = async () => {
       try {
         const { data } = await api.get<Merchant[]>("/merchants");
+
         setMerchants(data);
         // Select the first merchant by default if available
         if (data.length > 0 && !selectedMerchant) {
@@ -107,6 +113,7 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
     account_name: string;
     account_type: "DEBIT_NORMAL" | "CREDIT_NORMAL";
     currency: string;
+    initial_balance: number;
   }) => {
     if (!selectedMerchant) {
       throw new Error("No merchant selected");
@@ -117,6 +124,7 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
         `/merchants/${selectedMerchant}/accounts`,
         accountData,
       );
+
       return newAccount;
     } catch (error) {
       console.error("Error creating account:", error);
@@ -133,6 +141,7 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
       const { data } = await api.get<Account[]>(
         `/merchants/${selectedMerchant}/accounts`,
       );
+
       return data;
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -166,6 +175,7 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
         `/merchants/${merchantId}/accounts/${accountId}`,
         payload,
       );
+
       return updatedAccount;
     } catch (error) {
       console.error("Error updating account:", error);
@@ -182,7 +192,9 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
         "/merchants",
         merchantData,
       );
+
       setMerchants((prev) => [...prev, newMerchant]);
+
       return newMerchant;
     } catch (error) {
       console.error("Error creating merchant:", error);
@@ -193,7 +205,9 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
   const getMerchants = async () => {
     try {
       const { data } = await api.get<Merchant[]>("/merchants");
+
       setMerchants(data);
+
       return data;
     } catch (error) {
       console.error("Error fetching merchants:", error);
@@ -223,9 +237,11 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
         `/merchants/${merchantId}`,
         payload,
       );
+
       setMerchants((prev) =>
         prev.map((m) => (m.merchant_id === merchantId ? updatedMerchant : m)),
       );
+
       return updatedMerchant;
     } catch (error) {
       console.error("Error updating merchant:", error);
@@ -258,10 +274,12 @@ export function DefaultReconProvider({ children }: { children: ReactNode }) {
 
 export function useDefaultContext() {
   const context = useContext(DefaultContext);
+
   if (context === undefined) {
     throw new Error(
       "useDefaultContext must be used within a DefaultContextProvider",
     );
   }
+
   return context;
 }
